@@ -83,6 +83,9 @@ public function activate() {
         category_id     BIGINT UNSIGNED DEFAULT NULL,
         in_header_menu  TINYINT(1)      DEFAULT 0,
         author_name     VARCHAR(100)    DEFAULT NULL,
+        author_bio      MEDIUMTEXT      DEFAULT NULL,
+        author_image    VARCHAR(255)    DEFAULT NULL,
+        author_social_links LONGTEXT    DEFAULT NULL,
         editor_name     VARCHAR(100)    DEFAULT NULL,
         created         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -167,6 +170,9 @@ public function ensure_tables_exist() {
             category_id     BIGINT UNSIGNED DEFAULT NULL,
             in_header_menu  TINYINT(1)      DEFAULT 0,
             author_name     VARCHAR(100)    DEFAULT NULL,
+            author_bio      MEDIUMTEXT      DEFAULT NULL,
+            author_image    VARCHAR(255)    DEFAULT NULL,
+            author_social_links LONGTEXT    DEFAULT NULL,
             editor_name     VARCHAR(100)    DEFAULT NULL,
             created         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -213,9 +219,10 @@ public function update_author_fields_schema() {
     global $wpdb;
     $table = $wpdb->prefix . self::TABLE;
     
-    // Check if author_bio and author_image columns exist
+    // Check if author fields exist
     $author_bio_exists = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'author_bio'");
     $author_image_exists = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'author_image'");
+    $author_social_links_exists = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'author_social_links'");
     
     // Add author_bio column if it doesn't exist
     if (empty($author_bio_exists)) {
@@ -227,6 +234,12 @@ public function update_author_fields_schema() {
     if (empty($author_image_exists)) {
         $wpdb->query("ALTER TABLE $table ADD COLUMN author_image VARCHAR(255) DEFAULT NULL AFTER author_bio");
         error_log('Added missing author_image column to ' . $table);
+    }
+    
+    // Add author_social_links column if it doesn't exist
+    if (empty($author_social_links_exists)) {
+        $wpdb->query("ALTER TABLE $table ADD COLUMN author_social_links LONGTEXT DEFAULT NULL AFTER author_image");
+        error_log('Added missing author_social_links column to ' . $table);
     }
 }
 
@@ -585,10 +598,11 @@ public function get_endpoint_args_for_item_schema() {
         'in_header_menu' => ['type' => 'boolean', 'required' => false],
         
         // Author Fields
-    'author_name' => ['type' => 'string', 'required' => false],
-    'author_bio' => ['type' => 'string', 'required' => false],
-    'author_image' => ['type' => 'string', 'required' => false],
-    'editor_name' => ['type' => 'string', 'required' => false],
+        'author_name' => ['type' => 'string', 'required' => false],
+        'author_bio' => ['type' => 'string', 'required' => false],
+        'author_image' => ['type' => 'string', 'required' => false],
+        'author_social_links' => ['type' => 'string', 'required' => false],
+        'editor_name' => ['type' => 'string', 'required' => false],
     ];
 }
 
@@ -688,6 +702,8 @@ public function save_page(WP_REST_Request $req) {
         'author_name' => isset($params['author_name']) ? sanitize_text_field($params['author_name']) : null,
         'author_bio' => isset($params['author_bio']) ? wp_kses_post($params['author_bio']) : null,
         'author_image' => isset($params['author_image']) ? esc_url_raw($params['author_image']) : null,
+        'author_social_links' => isset($params['author_social_links']) ? wp_kses_post($params['author_social_links']) : null,
+        'editor_name' => isset($params['editor_name']) ? sanitize_text_field($params['editor_name']) : null,
         
         'updated' => current_time('mysql'),
     ];
