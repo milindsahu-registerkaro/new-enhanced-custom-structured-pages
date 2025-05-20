@@ -73,6 +73,9 @@ public function activate() {
         sections        LONGTEXT        DEFAULT NULL,
         conclusion_heading VARCHAR(255) DEFAULT NULL,
         conclusion_content MEDIUMTEXT   DEFAULT NULL,
+        banner_heading  VARCHAR(255)    DEFAULT NULL,
+        banner_description TEXT          DEFAULT NULL,
+        banner_service  VARCHAR(100)    DEFAULT NULL,
         faq_items       LONGTEXT        DEFAULT NULL,
         video_components LONGTEXT       DEFAULT NULL,
         breadcrumbs     LONGTEXT        DEFAULT NULL,
@@ -132,40 +135,43 @@ public function ensure_tables_exist() {
 
     // Main pages table
     $sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}enhanced_csp_pages (
-        id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-        slug varchar(191) NOT NULL,
-        status varchar(20) NOT NULL DEFAULT 'draft',
-        meta_title varchar(255) DEFAULT NULL,
-        meta_desc text DEFAULT NULL,
-        og_title varchar(255) DEFAULT NULL,
-        og_desc text DEFAULT NULL,
-        og_image varchar(255) DEFAULT NULL,
-        canonical varchar(255) DEFAULT NULL,
-        robots varchar(100) DEFAULT 'index, follow',
-        in_sitemap tinyint(1) DEFAULT 1,
-        h1 varchar(255) DEFAULT NULL,
-        hero_image varchar(255) DEFAULT NULL,
-        intro_text mediumtext DEFAULT NULL,
-        sections longtext DEFAULT NULL,
-        conclusion_heading varchar(255) DEFAULT NULL,
-        conclusion_content mediumtext DEFAULT NULL,
-        faq_items longtext DEFAULT NULL,
-        video_components longtext DEFAULT NULL,
-        breadcrumbs longtext DEFAULT NULL,
-        region varchar(100) DEFAULT NULL,
-        service varchar(100) DEFAULT NULL,
-        sub_service varchar(100) DEFAULT NULL,
-        content_type varchar(100) DEFAULT NULL,
-        category_id bigint(20) UNSIGNED DEFAULT NULL,
-        in_header_menu tinyint(1) DEFAULT 0,
-        author_name varchar(100) DEFAULT NULL,
-        author_bio mediumtext DEFAULT NULL,
-        author_image varchar(255) DEFAULT NULL,
-        author_social_links longtext DEFAULT NULL,
-        editor_name varchar(100) DEFAULT NULL,
-        created datetime DEFAULT CURRENT_TIMESTAMP,
-        updated datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        published datetime DEFAULT NULL,
+        id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        slug VARCHAR(191) NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'draft',
+        meta_title VARCHAR(255) DEFAULT NULL,
+        meta_desc TEXT DEFAULT NULL,
+        og_title VARCHAR(255) DEFAULT NULL,
+        og_desc TEXT DEFAULT NULL,
+        og_image VARCHAR(255) DEFAULT NULL,
+        canonical VARCHAR(255) DEFAULT NULL,
+        robots VARCHAR(100) DEFAULT 'index, follow',
+        in_sitemap TINYINT(1) DEFAULT 1,
+        h1 VARCHAR(255) DEFAULT NULL,
+        hero_image VARCHAR(255) DEFAULT NULL,
+        intro_text MEDIUMTEXT DEFAULT NULL,
+        sections LONGTEXT DEFAULT NULL,
+        conclusion_heading VARCHAR(255) DEFAULT NULL,
+        conclusion_content MEDIUMTEXT DEFAULT NULL,
+        banner_heading VARCHAR(255) DEFAULT NULL,
+        banner_description TEXT DEFAULT NULL,
+        banner_service VARCHAR(100) DEFAULT NULL,
+        faq_items LONGTEXT DEFAULT NULL,
+        video_components LONGTEXT DEFAULT NULL,
+        breadcrumbs LONGTEXT DEFAULT NULL,
+        region VARCHAR(100) DEFAULT NULL,
+        service VARCHAR(100) DEFAULT NULL,
+        sub_service VARCHAR(100) DEFAULT NULL,
+        content_type VARCHAR(100) DEFAULT NULL,
+        category_id BIGINT(20) UNSIGNED DEFAULT NULL,
+        in_header_menu TINYINT(1) DEFAULT 0,
+        author_name VARCHAR(100) DEFAULT NULL,
+        author_bio MEDIUMTEXT DEFAULT NULL,
+        author_image VARCHAR(255) DEFAULT NULL,
+        author_social_links LONGTEXT DEFAULT NULL,
+        editor_name VARCHAR(100) DEFAULT NULL,
+        created DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        published DATETIME DEFAULT NULL,
         PRIMARY KEY  (id),
         UNIQUE KEY slug (slug),
         KEY category_id (category_id),
@@ -175,13 +181,13 @@ public function ensure_tables_exist() {
 
     // Categories table
     $categories_sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}enhanced_csp_pages_categories (
-        id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-        name varchar(191) NOT NULL,
-        slug varchar(191) NOT NULL,
-        description text DEFAULT NULL,
-        parent_id bigint(20) UNSIGNED DEFAULT NULL,
-        created datetime DEFAULT CURRENT_TIMESTAMP,
-        updated datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        name VARCHAR(191) NOT NULL,
+        slug VARCHAR(191) NOT NULL,
+        description TEXT DEFAULT NULL,
+        parent_id BIGINT(20) UNSIGNED DEFAULT NULL,
+        created DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY  (id),
         UNIQUE KEY slug (slug),
         KEY parent_id (parent_id)
@@ -190,25 +196,17 @@ public function ensure_tables_exist() {
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     
     // Execute the SQL with dbDelta
-    $main_result = dbDelta($sql);
-    $categories_result = dbDelta($categories_sql);
-
-    // Log the results
-    error_log('Main table creation result: ' . print_r($main_result, true));
-    error_log('Category table creation result: ' . print_r($categories_result, true));
+    dbDelta($sql);
+    dbDelta($categories_sql);
 
     // Check if tables exist
     $main_table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}enhanced_csp_pages'") === $wpdb->prefix . 'enhanced_csp_pages';
     $categories_table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}enhanced_csp_pages_categories'") === $wpdb->prefix . 'enhanced_csp_pages_categories';
 
-    error_log("Tables exist check - Main: " . ($main_table_exists ? 'Yes' : 'No') . ", Categories: " . ($categories_table_exists ? 'Yes' : 'No'));
-
     // Update schema if needed
     if ($main_table_exists) {
         $this->update_database_schema();
     }
-
-    error_log("Final tables exist check - Main: " . ($main_table_exists ? 'Yes' : 'No') . ", Categories: " . ($categories_table_exists ? 'Yes' : 'No'));
 
     return $main_table_exists && $categories_table_exists;
 }
@@ -253,98 +251,59 @@ public function update_author_fields_schema() {
 public function update_database_schema() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'enhanced_csp_pages';
+    
+    // Get current schema version
+    $current_version = get_option('enhanced_csp_schema_version', '0');
+    
+    // Only update if version is different
+    if ($current_version !== self::VERSION) {
+        // Update column types to ensure consistency
+        $column_updates = [
+            'id' => 'BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT',
+            'slug' => 'VARCHAR(191) NOT NULL',
+            'status' => 'VARCHAR(20) NOT NULL DEFAULT "draft"',
+            'meta_title' => 'VARCHAR(255) DEFAULT NULL',
+            'meta_desc' => 'TEXT DEFAULT NULL',
+            'og_title' => 'VARCHAR(255) DEFAULT NULL',
+            'og_desc' => 'TEXT DEFAULT NULL',
+            'og_image' => 'VARCHAR(255) DEFAULT NULL',
+            'canonical' => 'VARCHAR(255) DEFAULT NULL',
+            'robots' => 'VARCHAR(100) DEFAULT "index, follow"',
+            'in_sitemap' => 'TINYINT(1) DEFAULT 1',
+            'h1' => 'VARCHAR(255) DEFAULT NULL',
+            'hero_image' => 'VARCHAR(255) DEFAULT NULL',
+            'intro_text' => 'MEDIUMTEXT DEFAULT NULL',
+            'sections' => 'LONGTEXT DEFAULT NULL',
+            'conclusion_heading' => 'VARCHAR(255) DEFAULT NULL',
+            'conclusion_content' => 'MEDIUMTEXT DEFAULT NULL',
+            'banner_heading' => 'VARCHAR(255) DEFAULT NULL',
+            'banner_description' => 'TEXT DEFAULT NULL',
+            'banner_service' => 'VARCHAR(100) DEFAULT NULL',
+            'faq_items' => 'LONGTEXT DEFAULT NULL',
+            'video_components' => 'LONGTEXT DEFAULT NULL',
+            'breadcrumbs' => 'LONGTEXT DEFAULT NULL',
+            'region' => 'VARCHAR(100) DEFAULT NULL',
+            'service' => 'VARCHAR(100) DEFAULT NULL',
+            'sub_service' => 'VARCHAR(100) DEFAULT NULL',
+            'content_type' => 'VARCHAR(100) DEFAULT NULL',
+            'category_id' => 'BIGINT(20) UNSIGNED DEFAULT NULL',
+            'in_header_menu' => 'TINYINT(1) DEFAULT 0',
+            'author_name' => 'VARCHAR(100) DEFAULT NULL',
+            'author_bio' => 'MEDIUMTEXT DEFAULT NULL',
+            'author_image' => 'VARCHAR(255) DEFAULT NULL',
+            'author_social_links' => 'LONGTEXT DEFAULT NULL',
+            'editor_name' => 'VARCHAR(100) DEFAULT NULL',
+            'created' => 'DATETIME DEFAULT CURRENT_TIMESTAMP',
+            'updated' => 'DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+            'published' => 'DATETIME DEFAULT NULL'
+        ];
 
-    // Check and add conclusion fields if they don't exist
-    $conclusion_heading_exists = $wpdb->get_var("SHOW COLUMNS FROM `{$table_name}` LIKE 'conclusion_heading'");
-    $conclusion_content_exists = $wpdb->get_var("SHOW COLUMNS FROM `{$table_name}` LIKE 'conclusion_content'");
-
-    if (!$conclusion_heading_exists) {
-        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `conclusion_heading` varchar(255) DEFAULT NULL AFTER `sections`");
-        error_log("Added conclusion_heading column");
-    }
-
-    if (!$conclusion_content_exists) {
-        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `conclusion_content` mediumtext DEFAULT NULL AFTER `conclusion_heading`");
-        error_log("Added conclusion_content column");
-    }
-
-    // Check and add author fields if they don't exist
-    $author_fields = [
-        'author_name' => 'varchar(100)',
-        'author_bio' => 'mediumtext',
-        'author_image' => 'varchar(255)',
-        'author_social_links' => 'longtext'
-    ];
-
-    foreach ($author_fields as $field => $type) {
-        $field_exists = $wpdb->get_var("SHOW COLUMNS FROM `{$table_name}` LIKE '{$field}'");
-        if (!$field_exists) {
-            $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `{$field}` {$type} DEFAULT NULL");
-            error_log("Added {$field} column");
-        } else {
-            // Update field type if it exists but has wrong type
-            $wpdb->query("ALTER TABLE `{$table_name}` MODIFY COLUMN `{$field}` {$type} DEFAULT NULL");
-            error_log("Updated {$field} column type to {$type}");
-        }
-    }
-
-    // Check and add editor_name field if it doesn't exist
-    $editor_name_exists = $wpdb->get_var("SHOW COLUMNS FROM `{$table_name}` LIKE 'editor_name'");
-    if (!$editor_name_exists) {
-        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `editor_name` varchar(100) DEFAULT NULL");
-        error_log("Added editor_name column");
-    }
-
-    // Update datetime fields to use proper defaults
-    $datetime_updates = [
-        'created' => 'datetime DEFAULT CURRENT_TIMESTAMP',
-        'updated' => 'datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
-        'published' => 'datetime DEFAULT NULL'
-    ];
-
-    foreach ($datetime_updates as $field => $definition) {
-        $wpdb->query("ALTER TABLE `{$table_name}` MODIFY COLUMN `{$field}` {$definition}");
-        error_log("Updated {$field} column definition");
-    }
-
-    // Verify all required columns exist with correct types
-    $required_columns = [
-        'id' => 'bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT',
-        'slug' => 'varchar(191) NOT NULL',
-        'status' => 'varchar(20) NOT NULL DEFAULT "draft"',
-        'meta_title' => 'varchar(255) DEFAULT NULL',
-        'meta_desc' => 'text DEFAULT NULL',
-        'og_title' => 'varchar(255) DEFAULT NULL',
-        'og_desc' => 'text DEFAULT NULL',
-        'og_image' => 'varchar(255) DEFAULT NULL',
-        'canonical' => 'varchar(255) DEFAULT NULL',
-        'robots' => 'varchar(100) DEFAULT "index, follow"',
-        'in_sitemap' => 'tinyint(1) DEFAULT 1',
-        'h1' => 'varchar(255) DEFAULT NULL',
-        'hero_image' => 'varchar(255) DEFAULT NULL',
-        'intro_text' => 'mediumtext DEFAULT NULL',
-        'sections' => 'longtext DEFAULT NULL',
-        'faq_items' => 'longtext DEFAULT NULL',
-        'video_components' => 'longtext DEFAULT NULL',
-        'breadcrumbs' => 'longtext DEFAULT NULL',
-        'region' => 'varchar(100) DEFAULT NULL',
-        'service' => 'varchar(100) DEFAULT NULL',
-        'sub_service' => 'varchar(100) DEFAULT NULL',
-        'content_type' => 'varchar(100) DEFAULT NULL',
-        'category_id' => 'bigint(20) UNSIGNED DEFAULT NULL',
-        'in_header_menu' => 'tinyint(1) DEFAULT 0'
-    ];
-
-    foreach ($required_columns as $column => $definition) {
-        $column_exists = $wpdb->get_var("SHOW COLUMNS FROM `{$table_name}` LIKE '{$column}'");
-        if (!$column_exists) {
-            $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `{$column}` {$definition}");
-            error_log("Added missing column {$column}");
-        } else {
-            // Update column definition if it exists
+        foreach ($column_updates as $column => $definition) {
             $wpdb->query("ALTER TABLE `{$table_name}` MODIFY COLUMN `{$column}` {$definition}");
-            error_log("Updated {$column} column definition");
         }
+
+        // Update schema version
+        update_option('enhanced_csp_schema_version', self::VERSION);
     }
 }
     
@@ -670,6 +629,11 @@ public function get_endpoint_args_for_item_schema() {
         'author_image' => ['type' => 'string', 'required' => false],
         'author_social_links' => ['type' => 'array', 'required' => false, 'sanitize_callback' => null],
         'editor_name' => ['type' => 'string', 'required' => false],
+        
+        // Banner Fields
+        'banner_heading' => ['type' => 'string', 'required' => false],
+        'banner_description' => ['type' => 'string', 'required' => false],
+        'banner_service' => ['type' => 'string', 'required' => false],
     ];
 }
 

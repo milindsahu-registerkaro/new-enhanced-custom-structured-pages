@@ -365,27 +365,28 @@ $page_title = $page_id ? 'Edit Page' : 'Add New Page';
             <tr>
                 <th scope="row"><label for="section-content-{{index}}">Content</label></th>
                 <td>
-                    <div class="wp-editor-container">
-                        <div id="wp-section-content-{{index}}-wrap" class="wp-core-ui wp-editor-wrap tmce-active">
-                            <div id="wp-section-content-{{index}}-editor-tools" class="wp-editor-tools hide-if-no-js">
-                                <div class="wp-editor-tabs">
-                                    <button type="button" id="section-content-{{index}}-tmce" class="wp-switch-editor switch-tmce" data-wp-editor-id="section-content-{{index}}">Visual</button>
-                                    <button type="button" id="section-content-{{index}}-html" class="wp-switch-editor switch-html" data-wp-editor-id="section-content-{{index}}">Text</button>
-                                </div>
-                            </div>
-                            <div id="wp-section-content-{{index}}-editor-container" class="wp-editor-container">
-                                <textarea id="section-content-{{index}}" name="sections[{{index}}][content]" class="wp-editor-area" rows="8"></textarea>
-                            </div>
-                        </div>
-                    </div>
+                    <?php 
+                    $editor_settings = array(
+                        'textarea_name' => 'sections[{{index}}][content]',
+                        'textarea_rows' => 10,
+                        'media_buttons' => true,
+                        'teeny' => false,
+                        'quicktags' => true,
+                        'tinymce' => array(
+                            'height' => 300,
+                            'wp_autoresize_on' => true,
+                            'toolbar1' => 'formatselect | bold italic | bullist numlist | link unlink | alignleft aligncenter alignright | wp_adv',
+                            'toolbar2' => 'forecolor | pastetext | removeformat | charmap | outdent indent | undo redo',
+                            'plugins' => 'charmap colorpicker hr lists media paste tabfocus textcolor wordpress wpautoresize wpeditimage wpemoji wpgallery wplink wptextpattern'
+                        )
+                    );
+                    wp_editor('', 'section-content-{{index}}', $editor_settings);
+                    ?>
                 </td>
             </tr>
             <tr>
-                <th scope="row"><label for="section-anchor-{{index}}">Anchor ID</label></th>
-                <td>
-                    <input type="text" id="section-anchor-{{index}}" name="sections[{{index}}][anchor]" class="regular-text">
-                    <p class="description">Used for fragment URLs like #this-section</p>
-                </td>
+                <th scope="row"><label for="section-anchor-{{index}}">Anchor</label></th>
+                <td><input type="text" id="section-anchor-{{index}}" name="sections[{{index}}][anchor]" class="regular-text"></td>
             </tr>
         </table>
     </div>

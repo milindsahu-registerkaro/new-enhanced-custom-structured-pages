@@ -735,41 +735,120 @@
         init.selector = '#section-content-' + index;
         init.id = 'section-content-' + index;
         init.elements = 'section-content-' + index;
-        init.height = 300;
-        init.wp_autoresize_on = true;
-        init.toolbar1 = 'formatselect | bold italic | bullist numlist | link unlink | alignleft aligncenter alignright | wp_adv';
-        init.toolbar2 = 'forecolor | pastetext | removeformat | charmap | outdent indent | undo redo';
-        init.plugins = 'charmap colorpicker hr lists media paste tabfocus textcolor wordpress wpautoresize wpeditimage wpemoji wpgallery wplink wptextpattern';
-        
-        // Initialize TinyMCE
+        init.body_class = 'section-content';
+        init.setup = function(editor) {
+          editor.on('change', function() {
+            editor.save();
+          });
+        };
         tinyMCE.init(init);
 
-        // Initialize QuickTags for the HTML editor
-        var qtInit = _.extend({}, tinyMCEPreInit.qtInit['page-intro-text']); // Clone default WP quicktags settings
-        qtInit.id = 'section-content-' + index;
-        new QTags(qtInit);
-        QTags._buttonsInit();
-
-        // Force Visual mode by default
-        setTimeout(function() {
-          if (tinyMCE.get('section-content-' + index)) {
-            switchEditors.go('section-content-' + index, 'tmce');
-          }
-        }, 500);
-      }
-
-      // Fill with data if provided
-      if (data) {
-        $("#section-heading-" + index).val(data.heading || "");
-        if (typeof tinyMCE !== 'undefined' && tinyMCE.get('section-content-' + index)) {
-          tinyMCE.get('section-content-' + index).setContent(data.content || "");
-        } else {
-          $("#section-content-" + index).val(data.content || "");
+        // Initialize quicktags
+        if (typeof QTags !== 'undefined') {
+          QTags.addButton('section_' + index, 'Section ' + index, function() {
+            var editor = tinyMCE.get('section-content-' + index);
+            if (editor) {
+              editor.setContent(editor.getContent() + '<p>New section content</p>');
+            }
+          });
         }
-        $("#section-anchor-" + index).val(data.anchor || "");
       }
 
-      return index;
+      // Initialize section handlers
+      this.initializeSectionHandlers(index);
+    },
+
+    initializeSectionHandlers: function(index) {
+      var self = this;
+      var $section = $('.section-item[data-index="' + index + '"]');
+
+      // Move up button
+      $section.find('.move-up').on('click', function() {
+        var $prev = $section.prev('.section-item');
+        if ($prev.length) {
+          $section.insertBefore($prev);
+          self.updateSectionNumbers();
+        }
+      });
+
+      // Move down button
+      $section.find('.move-down').on('click', function() {
+        var $next = $section.next('.section-item');
+        if ($next.length) {
+          $section.insertAfter($next);
+          self.updateSectionNumbers();
+        }
+      });
+
+      // Delete button
+      $section.find('.delete-section').on('click', function() {
+        if (confirm('Are you sure you want to delete this section?')) {
+          var editor = tinyMCE.get('section-content-' + index);
+          if (editor) {
+            editor.remove();
+          }
+          $section.remove();
+          self.updateSectionNumbers();
+        }
+      });
+    },
+
+    updateSectionNumbers: function() {
+      var self = this;
+      $('.section-item').each(function(index) {
+        var $section = $(this);
+        var newIndex = index + 1;
+        
+        // Update data-index
+        $section.attr('data-index', newIndex);
+        
+        // Update heading
+        $section.find('h3').text('Section ' + newIndex);
+        
+        // Update input IDs and names
+        $section.find('input, textarea').each(function() {
+          var $input = $(this);
+          var oldId = $input.attr('id');
+          var oldName = $input.attr('name');
+          
+          if (oldId) {
+            $input.attr('id', oldId.replace(/section-\d+/, 'section-' + newIndex));
+          }
+          if (oldName) {
+            $input.attr('name', oldName.replace(/sections\[\d+\]/, 'sections[' + newIndex + ']'));
+          }
+        });
+
+        // Update TinyMCE editor
+        var oldEditorId = 'section-content-' + $section.data('index');
+        var newEditorId = 'section-content-' + newIndex;
+        
+        if (tinyMCE.get(oldEditorId)) {
+          var editor = tinyMCE.get(oldEditorId);
+          var content = editor.getContent();
+          editor.remove();
+          
+          // Reinitialize editor with new ID
+          var init = _.extend({}, tinyMCEPreInit.mceInit['page-intro-text']);
+          init.selector = '#' + newEditorId;
+          init.id = newEditorId;
+          init.elements = newEditorId;
+          init.body_class = 'section-content';
+          init.setup = function(editor) {
+            editor.on('change', function() {
+              editor.save();
+            });
+          };
+          tinyMCE.init(init);
+          
+          // Set content
+          setTimeout(function() {
+            if (tinyMCE.get(newEditorId)) {
+              tinyMCE.get(newEditorId).setContent(content);
+            }
+          }, 100);
+        }
+      });
     },
 
     addFaq: function (data) {
