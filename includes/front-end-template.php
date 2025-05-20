@@ -123,6 +123,20 @@ function csp_render_page($page) {
                 <?php endforeach; ?>
             <?php endif; ?>
             
+            <?php if (!empty($page['conclusion_heading']) || !empty($page['conclusion_content'])) : ?>
+                <div class="csp-conclusion-section">
+                    <?php if (!empty($page['conclusion_heading'])) : ?>
+                        <h2><?php echo esc_html($page['conclusion_heading']); ?></h2>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($page['conclusion_content'])) : ?>
+                        <div class="csp-conclusion-content">
+                            <?php echo wp_kses_post($page['conclusion_content']); ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+            
             <?php if (!empty($page['video_components'])) : ?>
                 <?php foreach ($page['video_components'] as $video) : ?>
                     <div class="csp-video-component">

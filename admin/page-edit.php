@@ -81,6 +81,34 @@ $page_title = $page_id ? 'Edit Page' : 'Add New Page';
                             </div>
                         </div>
                         
+                        <!-- Conclusion Section -->
+                        <div class="postbox">
+                            <h2 class="hndle">Conclusion</h2>
+                            <div class="inside">
+                                <table class="form-table">
+                                    <tr>
+                                        <th scope="row"><label for="conclusion-heading">Heading</label></th>
+                                        <td>
+                                            <input type="text" id="conclusion-heading" name="conclusion_heading" class="regular-text">
+                                            <p class="description">Heading for the conclusion section</p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="conclusion-content">Content</label></th>
+                                        <td>
+                                            <?php wp_editor('', 'conclusion-content', [
+                                                'textarea_name' => 'conclusion_content',
+                                                'media_buttons' => true,
+                                                'textarea_rows' => 5,
+                                                'teeny' => false
+                                            ]); ?>
+                                            <p class="description">Content of the conclusion section</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
                         <!-- FAQ Section -->
                         <div class="postbox">
                             <h2 class="hndle">FAQ Items</h2>

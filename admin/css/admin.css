@@ -360,3 +360,46 @@
     display: inline-block;
   }
 }
+
+/**
+ * Add these styles to admin.css for the conclusion section
+ */
+
+/* Conclusion section styling */
+.csp-conclusion-section {
+  background-color: #f9f9f9;
+  border: 1px solid #e2e4e7;
+  border-radius: 3px;
+  padding: 20px;
+  margin: 30px 0;
+}
+
+.csp-conclusion-content {
+  margin-top: 15px;
+}
+
+/* Add a special border color for the conclusion section to make it stand out */
+#conclusion-heading:focus {
+  border-color: #0073aa;
+  box-shadow: 0 0 2px rgba(0, 115, 170, 0.8);
+}
+
+/* Style the conclusion section in the front-end template */
+.csp-conclusion-section h2 {
+  margin-top: 0;
+  color: #23282d;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.csp-conclusion-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Add responsive styles for the conclusion section */
+@media screen and (max-width: 782px) {
+  .csp-conclusion-section {
+    padding: 15px;
+    margin: 20px 0;
+  }
+}

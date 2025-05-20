@@ -560,6 +560,22 @@
         $("#hero-image-remove").show();
       }
 
+      // ADD CONCLUSION SECTION CODE HERE:
+      // Conclusion section
+      if (page.conclusion_heading) {
+        $("#conclusion-heading").val(page.conclusion_heading);
+      }
+
+      // If wp_editor exists for conclusion content
+      if (typeof tinyMCE !== "undefined" && tinyMCE.get("conclusion-content")) {
+        tinyMCE
+          .get("conclusion-content")
+          .setContent(page.conclusion_content || "");
+      } else {
+        $("#conclusion-content").val(page.conclusion_content || "");
+      }
+      // END OF CONCLUSION SECTION CODE
+
       // SEO fields
       $("#meta-title").val(page.meta_title || "");
       $("#meta-desc").val(page.meta_desc || "");
@@ -748,6 +764,20 @@
 
       formData.hero_image = $("#page-hero-image").val();
 
+      // ADD CONCLUSION SECTION CODE HERE:
+      // Conclusion section
+      formData.conclusion_heading = $("#conclusion-heading").val();
+
+      // If wp_editor exists for conclusion content
+      if (typeof tinyMCE !== "undefined" && tinyMCE.get("conclusion-content")) {
+        formData.conclusion_content = tinyMCE
+          .get("conclusion-content")
+          .getContent();
+      } else {
+        formData.conclusion_content = $("#conclusion-content").val();
+      }
+      // END OF CONCLUSION SECTION CODE
+
       // SEO fields
       formData.meta_title = $("#meta-title").val();
       formData.meta_desc = $("#meta-desc").val();
@@ -828,7 +858,34 @@
 
     savePage: function () {
       var self = this;
+
+      console.log("Save button clicked");
+
+      // Check what TinyMCE editors are available
+      if (typeof tinyMCE !== "undefined") {
+        console.log("All editors:", tinyMCE.editors);
+
+        // Force all editors to update their textareas
+        tinyMCE.triggerSave();
+
+        // Specifically check for our editors
+        if (tinyMCE.editors["conclusion-content"]) {
+          console.log("Conclusion editor exists");
+        } else {
+          console.log(
+            "Conclusion editor doesn't exist, checking all editor IDs:"
+          );
+          for (var i = 0; i < tinyMCE.editors.length; i++) {
+            console.log(" - Editor ID:", tinyMCE.editors[i].id);
+          }
+        }
+      }
+
+      // Now collect the form data after ensuring textareas are updated
       var formData = this.collectFormData();
+
+      // Log what we're sending to ensure conclusion fields are included
+      console.log("Form data being sent:", formData);
 
       $.ajax({
         url: restUrl + "/pages",
@@ -838,6 +895,8 @@
         },
         data: formData,
         success: function (page) {
+          console.log("Page saved successfully:", page);
+
           if (!self.pageId) {
             // Redirect to edit page if this was a new page
             window.location.href =
@@ -855,6 +914,7 @@
           }
         },
         error: function (xhr) {
+          console.error("Error saving page:", xhr.responseText);
           alert("Error saving page: " + xhr.responseText);
         },
       });
