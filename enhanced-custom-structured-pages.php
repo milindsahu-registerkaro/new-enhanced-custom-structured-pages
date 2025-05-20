@@ -128,85 +128,89 @@ public function activate() {
  */
 public function ensure_tables_exist() {
     global $wpdb;
-    
-    $table = $wpdb->prefix . self::TABLE;
-    $category_table = $wpdb->prefix . self::TABLE . '_categories';
-    
-    $main_table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table)) === $table;
-    $cat_table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $category_table)) === $category_table;
-    
-    error_log('Tables exist check - Main: ' . ($main_table_exists ? 'Yes' : 'No') . ', Categories: ' . ($cat_table_exists ? 'Yes' : 'No'));
-    
-    // Force create tables using direct queries if they don't exist
     $charset_collate = $wpdb->get_charset_collate();
+
+    // Main pages table
+    $sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}enhanced_csp_pages (
+        id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        slug varchar(191) NOT NULL,
+        status varchar(20) NOT NULL DEFAULT 'draft',
+        meta_title varchar(255) DEFAULT NULL,
+        meta_desc text DEFAULT NULL,
+        og_title varchar(255) DEFAULT NULL,
+        og_desc text DEFAULT NULL,
+        og_image varchar(255) DEFAULT NULL,
+        canonical varchar(255) DEFAULT NULL,
+        robots varchar(100) DEFAULT 'index, follow',
+        in_sitemap tinyint(1) DEFAULT 1,
+        h1 varchar(255) DEFAULT NULL,
+        hero_image varchar(255) DEFAULT NULL,
+        intro_text mediumtext DEFAULT NULL,
+        sections longtext DEFAULT NULL,
+        conclusion_heading varchar(255) DEFAULT NULL,
+        conclusion_content mediumtext DEFAULT NULL,
+        faq_items longtext DEFAULT NULL,
+        video_components longtext DEFAULT NULL,
+        breadcrumbs longtext DEFAULT NULL,
+        region varchar(100) DEFAULT NULL,
+        service varchar(100) DEFAULT NULL,
+        sub_service varchar(100) DEFAULT NULL,
+        content_type varchar(100) DEFAULT NULL,
+        category_id bigint(20) UNSIGNED DEFAULT NULL,
+        in_header_menu tinyint(1) DEFAULT 0,
+        author_name varchar(100) DEFAULT NULL,
+        author_bio mediumtext DEFAULT NULL,
+        author_image varchar(255) DEFAULT NULL,
+        author_social_links longtext DEFAULT NULL,
+        editor_name varchar(100) DEFAULT NULL,
+        created datetime DEFAULT CURRENT_TIMESTAMP,
+        updated datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        published datetime DEFAULT NULL,
+        PRIMARY KEY  (id),
+        UNIQUE KEY slug (slug),
+        KEY category_id (category_id),
+        KEY status (status),
+        KEY content_type (content_type)
+    ) $charset_collate;";
+
+    // Categories table
+    $categories_sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}enhanced_csp_pages_categories (
+        id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        name varchar(191) NOT NULL,
+        slug varchar(191) NOT NULL,
+        description text DEFAULT NULL,
+        parent_id bigint(20) UNSIGNED DEFAULT NULL,
+        created datetime DEFAULT CURRENT_TIMESTAMP,
+        updated datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY  (id),
+        UNIQUE KEY slug (slug),
+        KEY parent_id (parent_id)
+    ) $charset_collate;";
+
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     
-    if (!$main_table_exists) {
-        error_log('Forcing main table creation with direct query');
-        $wpdb->query("CREATE TABLE IF NOT EXISTS $table (
-            id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            slug            VARCHAR(191)    NOT NULL,
-            status          VARCHAR(20)     NOT NULL DEFAULT 'draft',
-            meta_title      VARCHAR(255)    DEFAULT NULL,
-            meta_desc       TEXT            DEFAULT NULL,
-            og_title        VARCHAR(255)    DEFAULT NULL,
-            og_desc         TEXT            DEFAULT NULL,
-            og_image        VARCHAR(255)    DEFAULT NULL,
-            canonical       VARCHAR(255)    DEFAULT NULL,
-            robots          VARCHAR(100)    DEFAULT NULL,
-            in_sitemap      TINYINT(1)      DEFAULT 1,
-            h1              VARCHAR(255)    DEFAULT NULL,
-            hero_image      VARCHAR(255)    DEFAULT NULL,
-            intro_text      MEDIUMTEXT      DEFAULT NULL,
-            sections        LONGTEXT        DEFAULT NULL,
-            conclusion_heading VARCHAR(255) DEFAULT NULL,
-            conclusion_content MEDIUMTEXT   DEFAULT NULL,
-            faq_items       LONGTEXT        DEFAULT NULL,
-            video_components LONGTEXT       DEFAULT NULL,
-            breadcrumbs     LONGTEXT        DEFAULT NULL,
-            region          VARCHAR(100)    DEFAULT NULL,
-            service         VARCHAR(100)    DEFAULT NULL,
-            sub_service     VARCHAR(100)    DEFAULT NULL,
-            content_type    VARCHAR(100)    DEFAULT NULL,
-            category_id     BIGINT UNSIGNED DEFAULT NULL,
-            in_header_menu  TINYINT(1)      DEFAULT 0,
-            author_name     VARCHAR(100)    DEFAULT NULL,
-            author_bio      MEDIUMTEXT      DEFAULT NULL,
-            author_image    VARCHAR(255)    DEFAULT NULL,
-            author_social_links LONGTEXT    DEFAULT NULL,
-            editor_name     VARCHAR(100)    DEFAULT NULL,
-            created         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            published       DATETIME        DEFAULT NULL,
-            PRIMARY KEY  (id),
-            UNIQUE KEY slug (slug)
-        ) $charset_collate");
+    // Execute the SQL with dbDelta
+    $main_result = dbDelta($sql);
+    $categories_result = dbDelta($categories_sql);
+
+    // Log the results
+    error_log('Main table creation result: ' . print_r($main_result, true));
+    error_log('Category table creation result: ' . print_r($categories_result, true));
+
+    // Check if tables exist
+    $main_table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}enhanced_csp_pages'") === $wpdb->prefix . 'enhanced_csp_pages';
+    $categories_table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}enhanced_csp_pages_categories'") === $wpdb->prefix . 'enhanced_csp_pages_categories';
+
+    error_log("Tables exist check - Main: " . ($main_table_exists ? 'Yes' : 'No') . ", Categories: " . ($categories_table_exists ? 'Yes' : 'No'));
+
+    // Update schema if needed
+    if ($main_table_exists) {
+        $this->update_database_schema();
     }
-    
-    if (!$cat_table_exists) {
-        error_log('Forcing category table creation with direct query');
-        $wpdb->query("CREATE TABLE IF NOT EXISTS $category_table (
-            id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            name        VARCHAR(191)    NOT NULL,
-            slug        VARCHAR(191)    NOT NULL,
-            description TEXT            DEFAULT NULL,
-            parent_id   BIGINT UNSIGNED DEFAULT NULL,
-            created     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY  (id),
-            UNIQUE KEY slug (slug)
-        ) $charset_collate");
-    }
-    
-    // Check again to verify tables exist
-    $main_table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table)) === $table;
-    $cat_table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $category_table)) === $category_table;
-    
-    error_log('Final tables exist check - Main: ' . ($main_table_exists ? 'Yes' : 'No') . ', Categories: ' . ($cat_table_exists ? 'Yes' : 'No'));
-    
-    return [
-        'main_table' => $main_table_exists,
-        'category_table' => $cat_table_exists
-    ];
+
+    error_log("Final tables exist check - Main: " . ($main_table_exists ? 'Yes' : 'No') . ", Categories: " . ($categories_table_exists ? 'Yes' : 'No'));
+
+    return $main_table_exists && $categories_table_exists;
 }
 
 /**
@@ -248,37 +252,100 @@ public function update_author_fields_schema() {
  */
 public function update_database_schema() {
     global $wpdb;
-    $table = $wpdb->prefix . self::TABLE;
-    
-    // Existing checks for other columns
-    $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'category_id'");
-    
-    // If column doesn't exist, add it
-    if (empty($column_exists)) {
-        $wpdb->query("ALTER TABLE $table ADD COLUMN category_id BIGINT UNSIGNED DEFAULT NULL AFTER content_type");
-        error_log('Added missing category_id column to ' . $table);
+    $table_name = $wpdb->prefix . 'enhanced_csp_pages';
+
+    // Check and add conclusion fields if they don't exist
+    $conclusion_heading_exists = $wpdb->get_var("SHOW COLUMNS FROM `{$table_name}` LIKE 'conclusion_heading'");
+    $conclusion_content_exists = $wpdb->get_var("SHOW COLUMNS FROM `{$table_name}` LIKE 'conclusion_content'");
+
+    if (!$conclusion_heading_exists) {
+        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `conclusion_heading` varchar(255) DEFAULT NULL AFTER `sections`");
+        error_log("Added conclusion_heading column");
     }
-    
-    // Check if the conclusion_heading column exists
-    $conclusion_heading_exists = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'conclusion_heading'");
-    
-    // If conclusion_heading column doesn't exist, add it
-    if (empty($conclusion_heading_exists)) {
-        $wpdb->query("ALTER TABLE $table ADD COLUMN conclusion_heading VARCHAR(255) DEFAULT NULL AFTER sections");
-        error_log('Added missing conclusion_heading column to ' . $table);
+
+    if (!$conclusion_content_exists) {
+        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `conclusion_content` mediumtext DEFAULT NULL AFTER `conclusion_heading`");
+        error_log("Added conclusion_content column");
     }
-    
-    // Check if the conclusion_content column exists
-    $conclusion_content_exists = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'conclusion_content'");
-    
-    // If conclusion_content column doesn't exist, add it
-    if (empty($conclusion_content_exists)) {
-        $wpdb->query("ALTER TABLE $table ADD COLUMN conclusion_content MEDIUMTEXT DEFAULT NULL AFTER conclusion_heading");
-        error_log('Added missing conclusion_content column to ' . $table);
+
+    // Check and add author fields if they don't exist
+    $author_fields = [
+        'author_name' => 'varchar(100)',
+        'author_bio' => 'mediumtext',
+        'author_image' => 'varchar(255)',
+        'author_social_links' => 'longtext'
+    ];
+
+    foreach ($author_fields as $field => $type) {
+        $field_exists = $wpdb->get_var("SHOW COLUMNS FROM `{$table_name}` LIKE '{$field}'");
+        if (!$field_exists) {
+            $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `{$field}` {$type} DEFAULT NULL");
+            error_log("Added {$field} column");
+        } else {
+            // Update field type if it exists but has wrong type
+            $wpdb->query("ALTER TABLE `{$table_name}` MODIFY COLUMN `{$field}` {$type} DEFAULT NULL");
+            error_log("Updated {$field} column type to {$type}");
+        }
     }
-    
-    // Add new author fields
-    $this->update_author_fields_schema();
+
+    // Check and add editor_name field if it doesn't exist
+    $editor_name_exists = $wpdb->get_var("SHOW COLUMNS FROM `{$table_name}` LIKE 'editor_name'");
+    if (!$editor_name_exists) {
+        $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `editor_name` varchar(100) DEFAULT NULL");
+        error_log("Added editor_name column");
+    }
+
+    // Update datetime fields to use proper defaults
+    $datetime_updates = [
+        'created' => 'datetime DEFAULT CURRENT_TIMESTAMP',
+        'updated' => 'datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+        'published' => 'datetime DEFAULT NULL'
+    ];
+
+    foreach ($datetime_updates as $field => $definition) {
+        $wpdb->query("ALTER TABLE `{$table_name}` MODIFY COLUMN `{$field}` {$definition}");
+        error_log("Updated {$field} column definition");
+    }
+
+    // Verify all required columns exist with correct types
+    $required_columns = [
+        'id' => 'bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT',
+        'slug' => 'varchar(191) NOT NULL',
+        'status' => 'varchar(20) NOT NULL DEFAULT "draft"',
+        'meta_title' => 'varchar(255) DEFAULT NULL',
+        'meta_desc' => 'text DEFAULT NULL',
+        'og_title' => 'varchar(255) DEFAULT NULL',
+        'og_desc' => 'text DEFAULT NULL',
+        'og_image' => 'varchar(255) DEFAULT NULL',
+        'canonical' => 'varchar(255) DEFAULT NULL',
+        'robots' => 'varchar(100) DEFAULT "index, follow"',
+        'in_sitemap' => 'tinyint(1) DEFAULT 1',
+        'h1' => 'varchar(255) DEFAULT NULL',
+        'hero_image' => 'varchar(255) DEFAULT NULL',
+        'intro_text' => 'mediumtext DEFAULT NULL',
+        'sections' => 'longtext DEFAULT NULL',
+        'faq_items' => 'longtext DEFAULT NULL',
+        'video_components' => 'longtext DEFAULT NULL',
+        'breadcrumbs' => 'longtext DEFAULT NULL',
+        'region' => 'varchar(100) DEFAULT NULL',
+        'service' => 'varchar(100) DEFAULT NULL',
+        'sub_service' => 'varchar(100) DEFAULT NULL',
+        'content_type' => 'varchar(100) DEFAULT NULL',
+        'category_id' => 'bigint(20) UNSIGNED DEFAULT NULL',
+        'in_header_menu' => 'tinyint(1) DEFAULT 0'
+    ];
+
+    foreach ($required_columns as $column => $definition) {
+        $column_exists = $wpdb->get_var("SHOW COLUMNS FROM `{$table_name}` LIKE '{$column}'");
+        if (!$column_exists) {
+            $wpdb->query("ALTER TABLE `{$table_name}` ADD COLUMN `{$column}` {$definition}");
+            error_log("Added missing column {$column}");
+        } else {
+            // Update column definition if it exists
+            $wpdb->query("ALTER TABLE `{$table_name}` MODIFY COLUMN `{$column}` {$definition}");
+            error_log("Updated {$column} column definition");
+        }
+    }
 }
     
 /**
@@ -601,7 +668,7 @@ public function get_endpoint_args_for_item_schema() {
         'author_name' => ['type' => 'string', 'required' => false],
         'author_bio' => ['type' => 'string', 'required' => false],
         'author_image' => ['type' => 'string', 'required' => false],
-        'author_social_links' => ['type' => 'string', 'required' => false],
+        'author_social_links' => ['type' => 'array', 'required' => false, 'sanitize_callback' => null],
         'editor_name' => ['type' => 'string', 'required' => false],
     ];
 }
@@ -1031,6 +1098,22 @@ public function save_category_enhanced(WP_REST_Request $req) {
         return new WP_Error('slug_required', 'Category slug is required', ['status' => 400]);
     }
     
+    // Check for existing category with the same slug
+    $existing_category = $wpdb->get_row(
+        $wpdb->prepare("SELECT * FROM $table WHERE slug = %s AND id != %d", 
+            sanitize_title($params['slug']), 
+            !empty($params['id']) ? intval($params['id']) : 0
+        )
+    );
+    
+    if ($existing_category) {
+        return new WP_Error(
+            'duplicate_category',
+            'A category with this slug already exists',
+            ['status' => 400]
+        );
+    }
+    
     // Prepare data for database
     $data = [
         'name' => sanitize_text_field($params['name']),
@@ -1042,15 +1125,6 @@ public function save_category_enhanced(WP_REST_Request $req) {
     
     // Debug info
     error_log('Saving category with data: ' . print_r($data, true));
-    
-    // Check for duplicate slug if inserting
-    if (empty($params['id'])) {
-        $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE slug = %s", $data['slug']));
-        if ($exists) {
-            // Add a unique identifier to the slug
-            $data['slug'] = $data['slug'] . '-' . uniqid();
-        }
-    }
     
     // Insert or update
     $result = false;
