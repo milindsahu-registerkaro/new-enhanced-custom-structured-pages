@@ -1006,7 +1006,13 @@ private function transform_row($row) {
     
     foreach ($json_fields as $field) {
         if (!empty($row[$field])) {
-            $row[$field] = json_decode($row[$field], true);
+            $decoded = json_decode($row[$field], true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $row[$field] = $decoded;
+            } else {
+                // If JSON decode fails, try to handle it as a string
+                $row[$field] = [$row[$field]];
+            }
         } else {
             $row[$field] = [];
         }

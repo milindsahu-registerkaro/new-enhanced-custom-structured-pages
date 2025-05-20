@@ -695,7 +695,11 @@
       // Sections
       if (page.sections && page.sections.length) {
         $("#sections-container").empty();
-        $.each(page.sections, function (index, section) {
+        // Reset section count to ensure proper indexing
+        this.sectionCount = 0;
+        // Parse sections if they're stored as a string
+        var sections = typeof page.sections === 'string' ? JSON.parse(page.sections) : page.sections;
+        $.each(sections, function (index, section) {
           self.addSection(section);
         });
       }
@@ -736,6 +740,12 @@
       var html = this.sectionTemplate({ index: index });
       $("#sections-container").append(html);
 
+      // Set other section data if provided
+      if (data) {
+        $("#section-heading-" + index).val(data.heading || "");
+        $("#section-anchor-" + index).val(data.anchor || "");
+      }
+
       // Initialize TinyMCE for the new section
       if (typeof tinyMCE !== 'undefined') {
         // Remove any existing editor with the same ID to prevent conflicts
@@ -750,6 +760,14 @@
         init.elements = 'section-content-' + index;
         init.body_class = 'section-content';
         init.setup = function(editor) {
+          editor.on('init', function() {
+            // Set content after editor is fully initialized
+            if (data && data.content) {
+              editor.setContent(data.content);
+              // Force save after setting content
+              editor.save();
+            }
+          });
           editor.on('change', function() {
             editor.save();
           });
@@ -848,18 +866,15 @@
           init.elements = newEditorId;
           init.body_class = 'section-content';
           init.setup = function(editor) {
+            editor.on('init', function() {
+              // Set content after editor is fully initialized
+              editor.setContent(content);
+            });
             editor.on('change', function() {
               editor.save();
             });
           };
           tinyMCE.init(init);
-          
-          // Set content
-          setTimeout(function() {
-            if (tinyMCE.get(newEditorId)) {
-              tinyMCE.get(newEditorId).setContent(content);
-            }
-          }, 100);
         }
       });
     },
@@ -1111,11 +1126,10 @@
       formData.sections = [];
       $(".section-item").each(function () {
         var index = $(this).data("index");
+        var editor = tinyMCE.get('section-content-' + index);
         var section = {
           heading: $("#section-heading-" + index).val(),
-          content: typeof tinyMCE !== 'undefined' && tinyMCE.get('section-content-' + index) 
-            ? tinyMCE.get('section-content-' + index).getContent()
-            : $("#section-content-" + index).val(),
+          content: editor ? editor.getContent() : $("#section-content-" + index).val(),
           anchor: $("#section-anchor-" + index).val()
         };
         formData.sections.push(section);
