@@ -31,6 +31,13 @@ if (!defined('ABSPATH')) {
                 </select>
                 <input type="submit" id="doaction" class="button action" value="Apply">
             </div>
+            <div class="alignleft actions category-filter">
+                <label for="category-filter-dropdown" style="font-weight:600;">Category:</label>
+                <select id="category-filter-dropdown">
+                    <option value="">All Categories</option>
+                    <!-- Categories will be loaded here by JS -->
+                </select>
+            </div>
             <div class="tablenav-pages">
                 <span class="displaying-num" id="items-count">0 items</span>
                 <span class="pagination-links" id="pagination-links">

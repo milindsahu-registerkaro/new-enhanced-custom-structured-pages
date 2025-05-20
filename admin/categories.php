@@ -21,6 +21,7 @@ if (!defined('ABSPATH')) {
                     <th scope="col" class="manage-column">Slug</th>
                     <th scope="col" class="manage-column">Description</th>
                     <th scope="col" class="manage-column">Parent</th>
+                    <th scope="col" class="manage-column">Pages</th>
                     <th scope="col" class="manage-column">Actions</th>
                 </tr>
             </thead>
@@ -35,6 +36,7 @@ if (!defined('ABSPATH')) {
                     <th scope="col" class="manage-column">Slug</th>
                     <th scope="col" class="manage-column">Description</th>
                     <th scope="col" class="manage-column">Parent</th>
+                    <th scope="col" class="manage-column">Pages</th>
                     <th scope="col" class="manage-column">Actions</th>
                 </tr>
             </tfoot>
@@ -92,6 +94,7 @@ if (!defined('ABSPATH')) {
         <td>{{slug}}</td>
         <td>{{description}}</td>
         <td>{{parent_name}}</td>
+        <td>{{page_count}}</td>
         <td>
             <a href="javascript:void(0);" class="edit-category" data-id="{{id}}">Edit</a> | 
             <a href="javascript:void(0);" class="delete-category" data-id="{{id}}">Delete</a>

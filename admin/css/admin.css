@@ -5,7 +5,9 @@
 /* General container styling */
 .custom-cms-container {
   margin-top: 20px;
-  overflow-x: auto; /* Ensures tables don't break on smaller screens */
+  overflow-x: auto;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Status indicators */
@@ -73,13 +75,48 @@
   margin-top: 0.5em;
   width: 100%;
   clear: both;
+  table-layout: fixed;
 }
 
 .form-table th {
-  width: 150px;
-  padding: 15px 10px 15px 0;
-  vertical-align: top;
-  text-align: left;
+  width: 120px; /* or even 100px */
+  min-width: 100px;
+  padding-right: 10px;
+}
+
+/* Increase the width of the right sidebar/metabox container */
+#poststuff {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+#post-body.columns-2 {
+  width: 100%;
+  display: flex;
+  gap: 24px;
+}
+
+#postbox-container-1 {
+  width: 68%; /* Main content area */
+  min-width: 350px;
+}
+
+#postbox-container-2 {
+  width: 32%; /* Sidebar/metaboxes */
+  min-width: 320px;
+}
+
+/* On smaller screens, stack columns */
+@media (max-width: 1100px) {
+  #post-body.columns-2 {
+    flex-direction: column;
+  }
+  #postbox-container-1,
+  #postbox-container-2 {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .form-table td {
@@ -87,6 +124,7 @@
   padding: 15px 10px;
   line-height: 1.3;
   vertical-align: middle;
+  word-wrap: break-word;
 }
 
 /* Image previews */
@@ -224,27 +262,6 @@
 
 /* Improved responsive behavior */
 @media screen and (max-width: 782px) {
-  /* Fix WordPress admin columns display on mobile */
-  .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column) {
-    display: block;
-  }
-
-  .wp-list-table .column-primary {
-    width: 100%;
-  }
-
-  /* Form and layout improvements */
-  #poststuff #post-body.columns-2 {
-    margin-right: 0;
-  }
-
-  #poststuff #postbox-container-1 {
-    margin-right: 0;
-    width: 100%;
-    float: none;
-    clear: both;
-  }
-
   .form-table th,
   .form-table td {
     display: block;
@@ -260,12 +277,25 @@
     box-sizing: border-box;
   }
 
+  /* Fix WordPress admin columns display on mobile */
+  .wp-list-table tr:not(.inline-edit-row):not(.no-items) td:not(.check-column) {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+  }
+
+  .wp-list-table .column-primary {
+    width: 100%;
+  }
+
   /* Better component styling on small screens */
   .section-item,
   .faq-item,
   .video-item,
   .breadcrumb-item {
     padding: 10px;
+    margin-bottom: 10px;
   }
 
   .section-header,
@@ -274,6 +304,7 @@
   .breadcrumb-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 10px;
   }
 
   .section-actions,
@@ -283,17 +314,35 @@
     margin-top: 10px;
     width: 100%;
     justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 5px;
   }
 
   /* WordPress editor improvements for mobile */
   .wp-editor-wrap {
     overflow-x: auto;
+    max-width: 100%;
   }
 
   .wp-media-buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
+  }
+
+  /* Fix for editor on small screens */
+  .mce-container,
+  .mce-container-body {
+    width: 100% !important;
+  }
+
+  /* Fix toolbar wrapping */
+  .mce-toolbar-grp {
+    padding: 0 !important;
+  }
+
+  .mce-toolbar .mce-btn-group .mce-btn {
+    margin: 2px;
   }
 }
 
@@ -325,23 +374,6 @@
   }
 }
 
-/* Fix for editor on small screens */
-@media screen and (max-width: 480px) {
-  .mce-container,
-  .mce-container-body {
-    width: 100% !important;
-  }
-
-  /* Fix toolbar wrapping */
-  .mce-toolbar-grp {
-    padding: 0 !important;
-  }
-
-  .mce-toolbar .mce-btn-group .mce-btn {
-    margin: 2px;
-  }
-}
-
 /* Fix for WordPress admin menus */
 @media screen and (max-width: 960px) {
   .auto-fold #wpcontent {
@@ -358,6 +390,7 @@
     padding: 8px 12px !important;
     margin: 5px 0 !important;
     display: inline-block;
+    min-height: 44px; /* Better touch target */
   }
 }
 
@@ -424,11 +457,12 @@
 .csp-author-container {
   display: flex;
   align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .csp-author-image {
   flex: 0 0 100px;
-  margin-right: 20px;
 }
 
 .csp-author-image img {
@@ -439,6 +473,7 @@
 
 .csp-author-details {
   flex: 1;
+  min-width: 250px;
 }
 
 .csp-author-name {
@@ -452,15 +487,121 @@
   line-height: 1.5;
 }
 
-/* Responsive styles */
-@media screen and (max-width: 600px) {
+/* Responsive improvements for front-end */
+@media screen and (max-width: 768px) {
+  .csp-page-container {
+    padding: 15px;
+  }
+
   .csp-author-container {
     flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
 
   .csp-author-image {
-    margin-right: 0;
     margin-bottom: 15px;
-    text-align: center;
   }
+
+  .csp-breadcrumbs ul {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .csp-breadcrumbs li:not(:last-child)::after {
+    display: none;
+  }
+}
+
+/* Front-end template improvements */
+.csp-page-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.csp-page-header {
+  margin-bottom: 30px;
+}
+
+.csp-hero-image {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.csp-hero-image img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.csp-breadcrumbs {
+  margin: 15px 0;
+}
+
+.csp-breadcrumbs ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.csp-breadcrumbs li {
+  display: flex;
+  align-items: center;
+}
+
+.csp-breadcrumbs li:not(:last-child)::after {
+  content: '/';
+  margin: 0 5px;
+  color: #666;
+}
+
+/* FAQ section improvements */
+.csp-faq-section {
+  margin: 30px 0;
+}
+
+.csp-faq-item {
+  margin-bottom: 20px;
+  border: 1px solid #e2e4e7;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.csp-faq-question {
+  padding: 15px;
+  background: #f9f9f9;
+  cursor: pointer;
+}
+
+.csp-faq-answer {
+  padding: 15px;
+  border-top: 1px solid #e2e4e7;
+}
+
+/* Responsive fix for admin form fields and columns */
+.form-table input[type="text"],
+.form-table input[type="email"],
+.form-table input[type="url"],
+.form-table input[type="number"],
+.form-table input[type="password"],
+.form-table select,
+.form-table textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  resize: vertical;
+}
+
+#postbox-container-2,
+#postbox-container-1,
+.metabox-holder .postbox {
+  max-width: 100%;
+  overflow-x: auto;
+  box-sizing: border-box;
 }

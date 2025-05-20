@@ -640,30 +640,37 @@ public function get_endpoint_args_for_item_schema() {
 public function get_pages(WP_REST_Request $req) {
     global $wpdb;
     $table = $wpdb->prefix . self::TABLE;
-    
+
     $page = isset($req['page']) ? intval($req['page']) : 1;
     $per_page = isset($req['per_page']) ? intval($req['per_page']) : 10;
     $offset = ($page - 1) * $per_page;
-    
+
+    $where = [];
+    $params = [];
+
+    // Support filtering by category_id
+    if (isset($req['category_id']) && $req['category_id'] !== '') {
+        $where[] = 'category_id = %d';
+        $params[] = intval($req['category_id']);
+    }
+
+    $where_sql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+
     // Get total count
-    $total = $wpdb->get_var("SELECT COUNT(*) FROM $table");
-    
+    $total = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table $where_sql", $params));
+
     // Get results with pagination
-    $results = $wpdb->get_results(
-        $wpdb->prepare(
-            "SELECT * FROM $table ORDER BY updated DESC LIMIT %d OFFSET %d", 
-            $per_page, 
-            $offset
-        ), 
-        ARRAY_A
-    );
-    
+    $query = "SELECT * FROM $table $where_sql ORDER BY updated DESC LIMIT %d OFFSET %d";
+    $params[] = $per_page;
+    $params[] = $offset;
+    $results = $wpdb->get_results($wpdb->prepare($query, $params), ARRAY_A);
+
     $response = new WP_REST_Response(array_map([$this, 'transform_row'], $results), 200);
-    
+
     // Add pagination headers
     $response->header('X-WP-Total', $total);
     $response->header('X-WP-TotalPages', ceil($total / $per_page));
-    
+
     return $response;
 }
 
@@ -841,21 +848,29 @@ public function delete_page(WP_REST_Request $req) {
 public function get_categories(WP_REST_Request $req) {
     global $wpdb;
     $table = $wpdb->prefix . self::TABLE . '_categories';
-    
+    $pages_table = $wpdb->prefix . self::TABLE;
+
     $results = $wpdb->get_results("SELECT * FROM $table ORDER BY name ASC", ARRAY_A);
-    
+
+    // Get page counts for all categories in one query
+    $counts = $wpdb->get_results("SELECT category_id, COUNT(*) as count FROM $pages_table WHERE category_id IS NOT NULL GROUP BY category_id", ARRAY_A);
+    $count_map = [];
+    foreach ($counts as $row) {
+        $count_map[$row['category_id']] = intval($row['count']);
+    }
+
     // Transform results
-      $categories = array_map(function($row) {
+    $categories = array_map(function($row) use ($count_map) {
         $row['id'] = intval($row['id']);
         if (!empty($row['parent_id'])) {
             $row['parent_id'] = intval($row['parent_id']);
         }
         $row['created'] = mysql2date('c', $row['created']);
         $row['updated'] = mysql2date('c', $row['updated']);
-        
+        $row['page_count'] = isset($count_map[$row['id']]) ? $count_map[$row['id']] : 0;
         return $row;
     }, $results);
-    
+
     return new WP_REST_Response($categories, 200);
 }
 

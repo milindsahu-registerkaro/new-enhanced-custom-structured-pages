@@ -50,8 +50,10 @@
 
       this.currentPage = 1;
       this.perPage = 10;
+      this.selectedCategory = '';
 
       this.setupTemplates();
+      this.loadCategories();
       this.loadPages();
       this.bindEvents();
     },
@@ -61,26 +63,46 @@
       this.template = Handlebars.compile(source);
     },
 
+    loadCategories: function () {
+      var self = this;
+      $.ajax({
+        url: restUrl + "/categories",
+        method: "GET",
+        beforeSend: function (xhr) {
+          xhr.setRequestHeader("X-WP-Nonce", restNonce);
+        },
+        success: function (categories) {
+          var $dropdown = $("#category-filter-dropdown");
+          $dropdown.find("option:not(:first)").remove();
+          categories.forEach(function (category) {
+            var label = category.name + (category.page_count ? " (" + category.page_count + ")" : "");
+            $dropdown.append('<option value="' + category.id + '">' + label + '</option>');
+          });
+        },
+      });
+    },
+
     loadPages: function () {
       var self = this;
-
+      var data = {
+        page: self.currentPage,
+        per_page: self.perPage,
+      };
+      var selectedCategory = $("#category-filter-dropdown").val();
+      if (selectedCategory) {
+        data.category_id = selectedCategory;
+      }
       $.ajax({
         url: restUrl + "/pages",
         method: "GET",
         beforeSend: function (xhr) {
           xhr.setRequestHeader("X-WP-Nonce", restNonce);
         },
-        data: {
-          page: self.currentPage,
-          per_page: self.perPage,
-        },
+        data: data,
         success: function (data, textStatus, request) {
           self.renderPages(data);
-
-          // Update pagination info
           var totalItems = request.getResponseHeader("X-WP-Total");
           var totalPages = request.getResponseHeader("X-WP-TotalPages");
-
           self.updatePagination(totalItems, totalPages);
         },
         error: function (xhr) {
@@ -224,6 +246,11 @@
         }
 
         self.performBulkAction(action, selectedPages);
+      });
+
+      $("#category-filter-dropdown").on("change", function () {
+        self.currentPage = 1;
+        self.loadPages();
       });
     },
 

@@ -89,7 +89,7 @@ function csp_render_page($page) {
             <?php endif; ?>
             
             <?php if (!empty($page['breadcrumbs'])) : ?>
-            <div class="csp-breadcrumbs">
+            <nav class="csp-breadcrumbs" aria-label="Breadcrumb">
                 <ul>
                     <li><a href="<?php echo esc_url(home_url()); ?>">Home</a></li>
                     <?php foreach ($page['breadcrumbs'] as $breadcrumb) : ?>
@@ -102,24 +102,19 @@ function csp_render_page($page) {
                         </li>
                     <?php endforeach; ?>
                 </ul>
-            </div>
+            </nav>
             <?php endif; ?>
         </div>
         
         <div class="csp-page-content">
             <?php if (!empty($page['sections'])) : ?>
                 <?php foreach ($page['sections'] as $section) : ?>
-                    <div class="csp-section" <?php echo !empty($section['anchor']) ? 'id="' . esc_attr($section['anchor']) . '"' : ''; ?>>
-                        <?php if (!empty($section['heading'])) : ?>
-                            <h2><?php echo esc_html($section['heading']); ?></h2>
-                        <?php endif; ?>
-                        
-                        <?php if (!empty($section['content'])) : ?>
-                            <div class="csp-section-content">
-                                <?php echo wp_kses_post($section['content']); ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+                    <section class="csp-section" id="<?php echo esc_attr($section['anchor']); ?>">
+                        <h2><?php echo esc_html($section['heading']); ?></h2>
+                        <div class="csp-section-content">
+                            <?php echo wp_kses_post($section['content']); ?>
+                        </div>
+                    </section>
                 <?php endforeach; ?>
             <?php endif; ?>
             
@@ -159,31 +154,43 @@ function csp_render_page($page) {
                 <?php endforeach; ?>
             <?php endif; ?>
 
-            <?php if (!empty($page['author_name'])) : ?>
-                <div class="csp-author-section">
+            <?php if (!empty($page['author_name']) || !empty($page['author_bio'])) : ?>
+                <section class="csp-author-section">
                     <h2>About the Author</h2>
                     <div class="csp-author-container">
                         <?php if (!empty($page['author_image'])) : ?>
-                        <div class="csp-author-image">
-                            <img src="<?php echo esc_url($page['author_image']); ?>" alt="<?php echo esc_attr($page['author_name']); ?>">
-                        </div>
+                            <div class="csp-author-image">
+                                <img src="<?php echo esc_url($page['author_image']); ?>" alt="<?php echo esc_attr($page['author_name']); ?>">
+                            </div>
                         <?php endif; ?>
                         
                         <div class="csp-author-details">
-                            <h3 class="csp-author-name"><?php echo esc_html($page['author_name']); ?></h3>
+                            <?php if (!empty($page['author_name'])) : ?>
+                                <h3 class="csp-author-name"><?php echo esc_html($page['author_name']); ?></h3>
+                            <?php endif; ?>
                             
                             <?php if (!empty($page['author_bio'])) : ?>
-                            <div class="csp-author-bio">
-                                <?php echo wp_kses_post($page['author_bio']); ?>
-                            </div>
+                                <div class="csp-author-bio">
+                                    <?php echo wp_kses_post($page['author_bio']); ?>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($page['author_social_links'])) : ?>
+                                <div class="csp-author-social">
+                                    <?php foreach ($page['author_social_links'] as $social) : ?>
+                                        <a href="<?php echo esc_url($social['url']); ?>" target="_blank" rel="noopener noreferrer" class="csp-social-link">
+                                            <?php echo esc_html($social['platform']); ?>
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>
-                </div>
+                </section>
             <?php endif; ?>
             
             <?php if (!empty($page['faq_items'])) : ?>
-                <div class="csp-faq-section">
+                <section class="csp-faq-section">
                     <h2>Frequently Asked Questions</h2>
                     <div class="csp-faq-items">
                         <?php foreach ($page['faq_items'] as $faq) : ?>
@@ -197,7 +204,7 @@ function csp_render_page($page) {
                             </div>
                         <?php endforeach; ?>
                     </div>
-                </div>
+                </section>
             <?php endif; ?>
         </div>
     </div>
