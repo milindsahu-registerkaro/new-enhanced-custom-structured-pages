@@ -109,6 +109,48 @@ $page_title = $page_id ? 'Edit Page' : 'Add New Page';
                             </div>
                         </div>
                         
+                        <!-- Banner Section -->
+                        <div class="postbox">
+                            <h2 class="hndle">Banner Section</h2>
+                            <div class="inside">
+                                <table class="form-table">
+                                    <tr>
+                                        <th scope="row"><label for="banner-heading">Banner Heading</label></th>
+                                        <td>
+                                            <input type="text" id="banner-heading" name="banner_heading" class="regular-text">
+                                            <p class="description">Heading for the banner section</p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="banner-description">Banner Description</label></th>
+                                        <td>
+                                            <textarea id="banner-description" name="banner_description" rows="4" class="large-text"></textarea>
+                                            <p class="description">Description for the banner section</p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row"><label for="banner-service">Select Service</label></th>
+                                        <td>
+                                            <select id="banner-service" name="banner_service" class="regular-text">
+                                                <option value="">Select a Service</option>
+                                                <option value="Private Limited Company Registration">Private Limited Company Registration</option>
+                                                <option value="Public Limited Company Registration">Public Limited Company Registration</option>
+                                                <option value="LLP Registration">LLP Registration</option>
+                                                <option value="One Person Company Registration">One Person Company Registration</option>
+                                                <option value="Partnership Firm Registration">Partnership Firm Registration</option>
+                                                <option value="Sole Proprietorship Registration">Sole Proprietorship Registration</option>
+                                                <option value="Indian Subsidiary Registration">Indian Subsidiary Registration</option>
+                                                <option value="Nidhi Company Registration">Nidhi Company Registration</option>
+                                                <option value="Producer Company Registration">Producer Company Registration</option>
+                                                <option value="Startup India Registration">Startup India Registration</option>
+                                            </select>
+                                            <p class="description">Select the service for the banner</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
                         <!-- FAQ Section -->
                         <div class="postbox">
                             <h2 class="hndle">FAQ Items</h2>

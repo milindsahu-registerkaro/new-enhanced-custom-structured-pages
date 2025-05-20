@@ -580,6 +580,13 @@
         $("#hero-image-remove").show();
       }
 
+      // Banner Section
+      if (page.banner_heading) {
+        $('#banner-heading').val(page.banner_heading);
+        $('#banner-description').val(page.banner_description || '');
+        $('#banner-service').val(page.banner_service || '');
+      }
+
       // Conclusion section
       if (page.conclusion_heading) {
         $("#conclusion-heading").val(page.conclusion_heading);
@@ -715,6 +722,12 @@
         $.each(page.breadcrumbs, function (index, breadcrumb) {
           self.addBreadcrumb(breadcrumb);
         });
+      }
+
+      // Load conclusion
+      $('#conclusion-heading').val(page.conclusion_heading || '');
+      if (page.conclusion_content) {
+        tinyMCE.get('conclusion-content').setContent(page.conclusion_content);
       }
     },
 
@@ -992,6 +1005,11 @@
 
       formData.hero_image = $("#page-hero-image").val();
 
+      // Banner Section
+      formData.banner_heading = $('#banner-heading').val();
+      formData.banner_description = $('#banner-description').val();
+      formData.banner_service = $('#banner-service').val();
+
       // Conclusion section - use multiple approaches to ensure we get the content
       formData.conclusion_heading = $("#conclusion-heading").val();
       console.log("Conclusion heading:", formData.conclusion_heading);
@@ -1065,7 +1083,7 @@
       formData.service = $("#service").val();
       formData.sub_service = $("#sub-service").val();
       formData.content_type = $("#content-type").val();
-      formData.category_id = $("#category").val() || null;
+      formData.category_id = $("#category").val() ? parseInt($("#category").val()) : null;
       formData.in_header_menu = $("#in-header-menu").is(":checked");
 
       // Author fields

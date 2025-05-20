@@ -611,6 +611,9 @@ public function get_endpoint_args_for_item_schema() {
         'sections' => ['type' => 'array', 'required' => false, 'sanitize_callback' => null],
         'conclusion_heading' => ['type' => 'string', 'required' => false],
         'conclusion_content' => ['type' => 'string', 'required' => false],
+        'banner_heading' => ['type' => 'string', 'required' => false],
+        'banner_description' => ['type' => 'string', 'required' => false],
+        'banner_service' => ['type' => 'string', 'required' => false],
         'faq_items' => ['type' => 'array', 'required' => false, 'sanitize_callback' => null],
         'video_components' => ['type' => 'array', 'required' => false, 'sanitize_callback' => null],
         'breadcrumbs' => ['type' => 'array', 'required' => false, 'sanitize_callback' => null],
@@ -629,11 +632,6 @@ public function get_endpoint_args_for_item_schema() {
         'author_image' => ['type' => 'string', 'required' => false],
         'author_social_links' => ['type' => 'array', 'required' => false, 'sanitize_callback' => null],
         'editor_name' => ['type' => 'string', 'required' => false],
-        
-        // Banner Fields
-        'banner_heading' => ['type' => 'string', 'required' => false],
-        'banner_description' => ['type' => 'string', 'required' => false],
-        'banner_service' => ['type' => 'string', 'required' => false],
     ];
 }
 
@@ -717,6 +715,9 @@ public function save_page(WP_REST_Request $req) {
         'sections' => isset($params['sections']) ? wp_json_encode($params['sections'], JSON_UNESCAPED_UNICODE) : null,
         'conclusion_heading' => isset($params['conclusion_heading']) ? sanitize_text_field($params['conclusion_heading']) : null,
         'conclusion_content' => isset($params['conclusion_content']) ? wp_kses_post($params['conclusion_content']) : null,
+        'banner_heading' => isset($params['banner_heading']) ? sanitize_text_field($params['banner_heading']) : null,
+        'banner_description' => isset($params['banner_description']) ? wp_kses_post($params['banner_description']) : null,
+        'banner_service' => isset($params['banner_service']) ? sanitize_text_field($params['banner_service']) : null,
         'faq_items' => isset($params['faq_items']) ? wp_json_encode($params['faq_items'], JSON_UNESCAPED_UNICODE) : null,
         'video_components' => isset($params['video_components']) ? wp_json_encode($params['video_components'], JSON_UNESCAPED_UNICODE) : null,
         'breadcrumbs' => isset($params['breadcrumbs']) ? wp_json_encode($params['breadcrumbs'], JSON_UNESCAPED_UNICODE) : null,
