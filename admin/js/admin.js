@@ -668,13 +668,7 @@
       $("#service").val(page.service || "");
       $("#sub-service").val(page.sub_service || "");
       $("#content-type").val(page.content_type || "");
-      
-      // Set category_id and store it as a data attribute
-      if (page.category_id) {
-        $("#category").val(page.category_id);
-        $("#category").attr('data-selected-id', page.category_id);
-      }
-      
+      $("#category").val(page.category_id || "");
       $("#in-header-menu").prop("checked", page.in_header_menu);
 
       // Author fields
@@ -698,44 +692,42 @@
         });
       }
 
-      // Clear existing sections before loading new ones
-      $("#sections-container").empty();
-      
       // Sections
       if (page.sections && page.sections.length) {
+        $("#sections-container").empty();
         $.each(page.sections, function (index, section) {
           self.addSection(section);
         });
       }
 
-      // Clear existing FAQs before loading new ones
-      $("#faq-container").empty();
-      
       // FAQs
       if (page.faq_items && page.faq_items.length) {
+        $("#faq-container").empty();
         $.each(page.faq_items, function (index, faq) {
           self.addFaq(faq);
         });
       }
 
-      // Clear existing videos before loading new ones
-      $("#video-container").empty();
-      
       // Videos
       if (page.video_components && page.video_components.length) {
+        $("#video-container").empty();
         $.each(page.video_components, function (index, video) {
           self.addVideo(video);
         });
       }
 
-      // Clear existing breadcrumbs before loading new ones
-      $("#breadcrumb-container").empty();
-      
       // Breadcrumbs
       if (page.breadcrumbs && page.breadcrumbs.length) {
+        $("#breadcrumb-container").empty();
         $.each(page.breadcrumbs, function (index, breadcrumb) {
           self.addBreadcrumb(breadcrumb);
         });
+      }
+
+      // Load conclusion
+      $('#conclusion-heading').val(page.conclusion_heading || '');
+      if (page.conclusion_content) {
+        tinyMCE.get('conclusion-content').setContent(page.conclusion_content);
       }
     },
 
@@ -772,24 +764,6 @@
               editor.setContent(editor.getContent() + '<p>New section content</p>');
             }
           });
-        }
-      }
-
-      // Fill with data if provided
-      if (data) {
-        $("#section-heading-" + index).val(data.heading || "");
-        $("#section-anchor-" + index).val(data.anchor || "");
-        
-        // Set content in TinyMCE editor
-        if (typeof tinyMCE !== 'undefined') {
-          setTimeout(function() {
-            var editor = tinyMCE.get('section-content-' + index);
-            if (editor) {
-              editor.setContent(data.content || "");
-            }
-          }, 100);
-        } else {
-          $("#section-content-" + index).val(data.content || "");
         }
       }
 
@@ -1109,11 +1083,7 @@
       formData.service = $("#service").val();
       formData.sub_service = $("#sub-service").val();
       formData.content_type = $("#content-type").val();
-      
-      // Get category_id from the stored data attribute or the select value
-      var categoryId = $("#category").attr('data-selected-id') || $("#category").val();
-      formData.category_id = categoryId ? parseInt(categoryId) : null;
-      
+      formData.category_id = $("#category").val() ? parseInt($("#category").val()) : null;
       formData.in_header_menu = $("#in-header-menu").is(":checked");
 
       // Author fields
