@@ -349,6 +349,7 @@
       this.initializeFormSections();
       this.bindEvents();
       this.loadCategories();
+      this.socialLinkIndex = 0;  // Initialize social link index
 
       if (this.pageId) {
         this.loadPage(this.pageId);
@@ -533,6 +534,11 @@
       $("#preview-page").on("click", function () {
         self.previewPage();
       });
+
+      // Add social link button
+      $("#add-social-link").on("click", function() {
+        self.addSocialLink();
+      });
     },
 
     loadPage: function (pageId) {
@@ -668,6 +674,17 @@
         $("#author-image-remove").show();
       }
 
+      // Populate social links
+      if (page.author_social_links && page.author_social_links.length) {
+        $("#social-links-container").empty();
+        $.each(page.author_social_links, function(index, socialLink) {
+          self.addSocialLink();
+          var currentIndex = self.socialLinkIndex - 1;
+          $("#social-platform-" + currentIndex).val(socialLink.platform);
+          $("#social-url-" + currentIndex).val(socialLink.url);
+        });
+      }
+
       // Sections
       if (page.sections && page.sections.length) {
         $("#sections-container").empty();
@@ -706,10 +723,49 @@
       var html = this.sectionTemplate({ index: index });
       $("#sections-container").append(html);
 
+      // Initialize TinyMCE for the new section
+      if (typeof tinyMCE !== 'undefined') {
+        // Remove any existing editor with the same ID to prevent conflicts
+        if (tinyMCE.get('section-content-' + index)) {
+          tinyMCE.get('section-content-' + index).remove();
+        }
+
+        // Initialize new editor with WordPress settings
+        var init = _.extend({}, tinyMCEPreInit.mceInit['page-intro-text']); // Clone default WP editor settings
+        init.selector = '#section-content-' + index;
+        init.id = 'section-content-' + index;
+        init.elements = 'section-content-' + index;
+        init.height = 300;
+        init.wp_autoresize_on = true;
+        init.toolbar1 = 'formatselect | bold italic | bullist numlist | link unlink | alignleft aligncenter alignright | wp_adv';
+        init.toolbar2 = 'forecolor | pastetext | removeformat | charmap | outdent indent | undo redo';
+        init.plugins = 'charmap colorpicker hr lists media paste tabfocus textcolor wordpress wpautoresize wpeditimage wpemoji wpgallery wplink wptextpattern';
+        
+        // Initialize TinyMCE
+        tinyMCE.init(init);
+
+        // Initialize QuickTags for the HTML editor
+        var qtInit = _.extend({}, tinyMCEPreInit.qtInit['page-intro-text']); // Clone default WP quicktags settings
+        qtInit.id = 'section-content-' + index;
+        new QTags(qtInit);
+        QTags._buttonsInit();
+
+        // Force Visual mode by default
+        setTimeout(function() {
+          if (tinyMCE.get('section-content-' + index)) {
+            switchEditors.go('section-content-' + index, 'tmce');
+          }
+        }, 500);
+      }
+
       // Fill with data if provided
       if (data) {
         $("#section-heading-" + index).val(data.heading || "");
-        $("#section-content-" + index).val(data.content || "");
+        if (typeof tinyMCE !== 'undefined' && tinyMCE.get('section-content-' + index)) {
+          tinyMCE.get('section-content-' + index).setContent(data.content || "");
+        } else {
+          $("#section-content-" + index).val(data.content || "");
+        }
         $("#section-anchor-" + index).val(data.anchor || "");
       }
 
@@ -757,6 +813,38 @@
       }
 
       return index;
+    },
+
+    addSocialLink: function() {
+      var template = $("#social-link-template").html();
+      var html = template.replace(/{{index}}/g, this.socialLinkIndex++);
+      $("#social-links-container").append(html);
+      this.initializeSocialLinkHandlers($("#social-links-container").children().last());
+    },
+
+    initializeSocialLinkHandlers: function(element) {
+      var $element = $(element);
+      
+      // Move up button
+      $element.find('.move-up').on('click', function() {
+        var $prev = $element.prev();
+        if ($prev.length) {
+          $element.insertBefore($prev);
+        }
+      });
+
+      // Move down button
+      $element.find('.move-down').on('click', function() {
+        var $next = $element.next();
+        if ($next.length) {
+          $element.insertAfter($next);
+        }
+      });
+
+      // Delete button
+      $element.find('.delete-social-link').on('click', function() {
+        $element.remove();
+      });
     },
 
     openMediaUploader: function (
@@ -906,6 +994,17 @@
       formData.author_bio = $("#author-bio").val();
       formData.author_image = $("#author-image").val();
 
+      // Collect social links
+      formData.author_social_links = [];
+      $(".social-link-item").each(function() {
+        var index = $(this).data("index");
+        var socialLink = {
+          platform: $("#social-platform-" + index).val(),
+          url: $("#social-url-" + index).val()
+        };
+        formData.author_social_links.push(socialLink);
+      });
+
       // Page ID if editing
       if (this.pageId) {
         formData.id = this.pageId;
@@ -917,8 +1016,10 @@
         var index = $(this).data("index");
         var section = {
           heading: $("#section-heading-" + index).val(),
-          content: $("#section-content-" + index).val(),
-          anchor: $("#section-anchor-" + index).val(),
+          content: typeof tinyMCE !== 'undefined' && tinyMCE.get('section-content-' + index) 
+            ? tinyMCE.get('section-content-' + index).getContent()
+            : $("#section-content-" + index).val(),
+          anchor: $("#section-anchor-" + index).val()
         };
         formData.sections.push(section);
       });
@@ -966,33 +1067,13 @@
     savePage: function () {
       var self = this;
 
-      console.log("Save button clicked");
-
-      // Check what TinyMCE editors are available
-      if (typeof tinyMCE !== "undefined") {
-        console.log("All editors:", tinyMCE.editors);
-
-        // Force all editors to update their textareas
+      // Force all TinyMCE editors to update their textareas
+      if (typeof tinyMCE !== 'undefined') {
         tinyMCE.triggerSave();
-
-        // Specifically check for our editors
-        if (tinyMCE.editors["conclusion-content"]) {
-          console.log("Conclusion editor exists");
-        } else {
-          console.log(
-            "Conclusion editor doesn't exist, checking all editor IDs:"
-          );
-          for (var i = 0; i < tinyMCE.editors.length; i++) {
-            console.log(" - Editor ID:", tinyMCE.editors[i].id);
-          }
-        }
       }
 
       // Now collect the form data after ensuring textareas are updated
       var formData = this.collectFormData();
-
-      // Log what we're sending to ensure conclusion fields are included
-      console.log("Form data being sent:", formData);
 
       $.ajax({
         url: restUrl + "/pages",
@@ -1028,6 +1109,16 @@
     },
 
     deletePage: function () {
+      // Remove all TinyMCE editors before deleting the page
+      if (typeof tinyMCE !== 'undefined') {
+        $('.section-item').each(function() {
+          var index = $(this).data('index');
+          if (tinyMCE.get('section-content-' + index)) {
+            tinyMCE.get('section-content-' + index).remove();
+          }
+        });
+      }
+
       var pageId = this.pageId;
 
       $.ajax({

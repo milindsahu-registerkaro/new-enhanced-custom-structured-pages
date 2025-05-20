@@ -328,6 +328,16 @@ $page_title = $page_id ? 'Edit Page' : 'Add New Page';
                 </td>
             </tr>
             <tr>
+                <th scope="row"><label for="author-social-links">Social Links</label></th>
+                <td>
+                    <div id="social-links-container">
+                        <!-- Social links will be added here -->
+                    </div>
+                    <button type="button" class="button" id="add-social-link">Add Social Link</button>
+                    <p class="description">Add social media links for the author.</p>
+                </td>
+            </tr>
+            <tr>
                 <th scope="row">Editor</th>
                 <td><span id="editor-name"><?php echo esc_html(wp_get_current_user()->display_name); ?></span></td>
             </tr>
@@ -355,7 +365,19 @@ $page_title = $page_id ? 'Edit Page' : 'Add New Page';
             <tr>
                 <th scope="row"><label for="section-content-{{index}}">Content</label></th>
                 <td>
-                    <textarea id="section-content-{{index}}" name="sections[{{index}}][content]" class="section-content" rows="5"></textarea>
+                    <div class="wp-editor-container">
+                        <div id="wp-section-content-{{index}}-wrap" class="wp-core-ui wp-editor-wrap tmce-active">
+                            <div id="wp-section-content-{{index}}-editor-tools" class="wp-editor-tools hide-if-no-js">
+                                <div class="wp-editor-tabs">
+                                    <button type="button" id="section-content-{{index}}-tmce" class="wp-switch-editor switch-tmce" data-wp-editor-id="section-content-{{index}}">Visual</button>
+                                    <button type="button" id="section-content-{{index}}-html" class="wp-switch-editor switch-html" data-wp-editor-id="section-content-{{index}}">Text</button>
+                                </div>
+                            </div>
+                            <div id="wp-section-content-{{index}}-editor-container" class="wp-editor-container">
+                                <textarea id="section-content-{{index}}" name="sections[{{index}}][content]" class="wp-editor-area" rows="8"></textarea>
+                            </div>
+                        </div>
+                    </div>
                 </td>
             </tr>
             <tr>
@@ -446,6 +468,41 @@ $page_title = $page_id ? 'Edit Page' : 'Add New Page';
             <tr>
                 <th scope="row"><label for="breadcrumb-url-{{index}}">URL</label></th>
                 <td><input type="text" id="breadcrumb-url-{{index}}" name="breadcrumbs[{{index}}][url]" class="regular-text"></td>
+            </tr>
+        </table>
+    </div>
+</script>
+
+<!-- Social Link Template -->
+<script type="text/template" id="social-link-template">
+    <div class="social-link-item" data-index="{{index}}">
+        <div class="social-link-header">
+            <h4>Social Link {{index}}</h4>
+            <div class="social-link-actions">
+                <button type="button" class="button move-up">↑</button>
+                <button type="button" class="button move-down">↓</button>
+                <button type="button" class="button button-link-delete delete-social-link">Remove</button>
+            </div>
+        </div>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="social-platform-{{index}}">Platform</label></th>
+                <td>
+                    <select id="social-platform-{{index}}" name="author_social_links[{{index}}][platform]" class="regular-text">
+                        <option value="facebook">Facebook</option>
+                        <option value="twitter">Twitter</option>
+                        <option value="linkedin">LinkedIn</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="other">Other</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="social-url-{{index}}">URL</label></th>
+                <td>
+                    <input type="url" id="social-url-{{index}}" name="author_social_links[{{index}}][url]" class="regular-text" placeholder="https://">
+                </td>
             </tr>
         </table>
     </div>

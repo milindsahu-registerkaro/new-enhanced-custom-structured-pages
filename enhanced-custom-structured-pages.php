@@ -702,7 +702,7 @@ public function save_page(WP_REST_Request $req) {
         'author_name' => isset($params['author_name']) ? sanitize_text_field($params['author_name']) : null,
         'author_bio' => isset($params['author_bio']) ? wp_kses_post($params['author_bio']) : null,
         'author_image' => isset($params['author_image']) ? esc_url_raw($params['author_image']) : null,
-        'author_social_links' => isset($params['author_social_links']) ? wp_kses_post($params['author_social_links']) : null,
+        'author_social_links' => isset($params['author_social_links']) ? wp_json_encode($params['author_social_links'], JSON_UNESCAPED_UNICODE) : null,
         'editor_name' => isset($params['editor_name']) ? sanitize_text_field($params['editor_name']) : null,
         
         'updated' => current_time('mysql'),
@@ -969,12 +969,15 @@ private function transform_row($row) {
         'faq_items', 
         'video_components', 
         'breadcrumbs',
-        'author_social_links',
-        'author_related_articles'
+        'author_social_links'
     ];
     
     foreach ($json_fields as $field) {
-        $row[$field] = !empty($row[$field]) ? json_decode($row[$field], true) : [];
+        if (!empty($row[$field])) {
+            $row[$field] = json_decode($row[$field], true);
+        } else {
+            $row[$field] = [];
+        }
     }
     
     // Format dates
