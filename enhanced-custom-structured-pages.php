@@ -204,13 +204,40 @@ public function ensure_tables_exist() {
 }
 
 /**
+ * Update database schema for author fields
+ */
+/**
+ * Update database schema for basic author fields
+ */
+public function update_author_fields_schema() {
+    global $wpdb;
+    $table = $wpdb->prefix . self::TABLE;
+    
+    // Check if author_bio and author_image columns exist
+    $author_bio_exists = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'author_bio'");
+    $author_image_exists = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'author_image'");
+    
+    // Add author_bio column if it doesn't exist
+    if (empty($author_bio_exists)) {
+        $wpdb->query("ALTER TABLE $table ADD COLUMN author_bio MEDIUMTEXT DEFAULT NULL AFTER author_name");
+        error_log('Added missing author_bio column to ' . $table);
+    }
+    
+    // Add author_image column if it doesn't exist
+    if (empty($author_image_exists)) {
+        $wpdb->query("ALTER TABLE $table ADD COLUMN author_image VARCHAR(255) DEFAULT NULL AFTER author_bio");
+        error_log('Added missing author_image column to ' . $table);
+    }
+}
+
+/**
  * Update the database schema if needed
  */
 public function update_database_schema() {
     global $wpdb;
     $table = $wpdb->prefix . self::TABLE;
     
-    // Check if the category_id column exists
+    // Existing checks for other columns
     $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'category_id'");
     
     // If column doesn't exist, add it
@@ -236,6 +263,9 @@ public function update_database_schema() {
         $wpdb->query("ALTER TABLE $table ADD COLUMN conclusion_content MEDIUMTEXT DEFAULT NULL AFTER conclusion_heading");
         error_log('Added missing conclusion_content column to ' . $table);
     }
+    
+    // Add new author fields
+    $this->update_author_fields_schema();
 }
     
 /**
@@ -554,9 +584,11 @@ public function get_endpoint_args_for_item_schema() {
         'category_id' => ['type' => 'integer', 'required' => false],
         'in_header_menu' => ['type' => 'boolean', 'required' => false],
         
-        // Authoring Fields
-        'author_name' => ['type' => 'string', 'required' => false],
-        'editor_name' => ['type' => 'string', 'required' => false],
+        // Author Fields
+    'author_name' => ['type' => 'string', 'required' => false],
+    'author_bio' => ['type' => 'string', 'required' => false],
+    'author_image' => ['type' => 'string', 'required' => false],
+    'editor_name' => ['type' => 'string', 'required' => false],
     ];
 }
 
@@ -652,9 +684,10 @@ public function save_page(WP_REST_Request $req) {
         'category_id' => isset($params['category_id']) && !empty($params['category_id']) ? intval($params['category_id']) : null,
         'in_header_menu' => isset($params['in_header_menu']) ? (bool)$params['in_header_menu'] : false,
         
-        // Authoring Fields
+        // Authoring Fields - Updated with new fields
         'author_name' => isset($params['author_name']) ? sanitize_text_field($params['author_name']) : null,
-        'editor_name' => isset($params['editor_name']) ? sanitize_text_field($params['editor_name']) : get_current_user_id(),
+        'author_bio' => isset($params['author_bio']) ? wp_kses_post($params['author_bio']) : null,
+        'author_image' => isset($params['author_image']) ? esc_url_raw($params['author_image']) : null,
         
         'updated' => current_time('mysql'),
     ];
@@ -915,7 +948,15 @@ private function transform_row($row) {
     }
     
     // JSON fields
-    $json_fields = ['sections', 'faq_items', 'video_components', 'breadcrumbs'];
+    $json_fields = [
+        'sections', 
+        'faq_items', 
+        'video_components', 
+        'breadcrumbs',
+        'author_social_links',
+        'author_related_articles'
+    ];
+    
     foreach ($json_fields as $field) {
         $row[$field] = !empty($row[$field]) ? json_decode($row[$field], true) : [];
     }

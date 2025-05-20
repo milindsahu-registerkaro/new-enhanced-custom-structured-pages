@@ -405,6 +405,20 @@
     bindEvents: function () {
       var self = this;
 
+      $("#author-image-button").on("click", function () {
+        self.openMediaUploader(
+          "#author-image",
+          "#author-image-preview",
+          "#author-image-remove"
+        );
+      });
+
+      $("#author-image-remove").on("click", function () {
+        $("#author-image").val("");
+        $("#author-image-preview").attr("src", "").hide();
+        $(this).hide();
+      });
+
       // Add section button
       $("#add-section").on("click", function () {
         self.addSection();
@@ -560,21 +574,48 @@
         $("#hero-image-remove").show();
       }
 
-      // ADD CONCLUSION SECTION CODE HERE:
       // Conclusion section
       if (page.conclusion_heading) {
         $("#conclusion-heading").val(page.conclusion_heading);
+        console.log("Set conclusion heading:", page.conclusion_heading);
       }
 
       // If wp_editor exists for conclusion content
-      if (typeof tinyMCE !== "undefined" && tinyMCE.get("conclusion-content")) {
-        tinyMCE
-          .get("conclusion-content")
-          .setContent(page.conclusion_content || "");
+      if (typeof tinyMCE !== "undefined") {
+        var conclusionEditor = tinyMCE.get("conclusion-content");
+        if (conclusionEditor) {
+          conclusionEditor.setContent(page.conclusion_content || "");
+          console.log(
+            "Set conclusion content via tinyMCE.get():",
+            page.conclusion_content
+          );
+        } else if (tinyMCE.editors["conclusion-content"]) {
+          tinyMCE.editors["conclusion-content"].setContent(
+            page.conclusion_content || ""
+          );
+          console.log(
+            "Set conclusion content via tinyMCE.editors[]:",
+            page.conclusion_content
+          );
+        } else {
+          // Try to find the textarea and set it directly
+          $("textarea[name='conclusion_content']").val(
+            page.conclusion_content || ""
+          );
+          console.log(
+            "Set conclusion content via textarea:",
+            page.conclusion_content
+          );
+        }
       } else {
-        $("#conclusion-content").val(page.conclusion_content || "");
+        $("textarea[name='conclusion_content']").val(
+          page.conclusion_content || ""
+        );
+        console.log(
+          "Set conclusion content via textarea (no TinyMCE):",
+          page.conclusion_content
+        );
       }
-      // END OF CONCLUSION SECTION CODE
 
       // SEO fields
       $("#meta-title").val(page.meta_title || "");
@@ -619,6 +660,13 @@
 
       // Author fields
       $("#author-name").val(page.author_name || "");
+      $("#author-bio").val(page.author_bio || "");
+
+      if (page.author_image) {
+        $("#author-image").val(page.author_image);
+        $("#author-image-preview").attr("src", page.author_image).show();
+        $("#author-image-remove").show();
+      }
 
       // Sections
       if (page.sections && page.sections.length) {
@@ -755,28 +803,82 @@
       formData.slug = $("#page-slug").val();
       formData.h1 = $("#page-h1").val();
 
-      // If wp_editor exists for intro text
-      if (typeof tinyMCE !== "undefined" && tinyMCE.get("page-intro-text")) {
-        formData.intro_text = tinyMCE.get("page-intro-text").getContent();
+      // Get intro text - multiple approaches to be sure
+      if (typeof tinyMCE !== "undefined") {
+        // First try getting editor by ID
+        var introEditor = tinyMCE.get("page-intro-text");
+        if (introEditor) {
+          formData.intro_text = introEditor.getContent();
+          console.log(
+            "Got intro_text from tinyMCE.get():",
+            formData.intro_text
+          );
+        }
+        // Then try getting by name when ID doesn't work
+        else {
+          formData.intro_text = $("textarea[name='intro_text']").val();
+          console.log("Got intro_text from textarea:", formData.intro_text);
+        }
       } else {
-        formData.intro_text = $("#page-intro-text").val();
+        formData.intro_text = $("textarea[name='intro_text']").val();
       }
 
       formData.hero_image = $("#page-hero-image").val();
 
-      // ADD CONCLUSION SECTION CODE HERE:
-      // Conclusion section
+      // Conclusion section - use multiple approaches to ensure we get the content
       formData.conclusion_heading = $("#conclusion-heading").val();
+      console.log("Conclusion heading:", formData.conclusion_heading);
 
-      // If wp_editor exists for conclusion content
-      if (typeof tinyMCE !== "undefined" && tinyMCE.get("conclusion-content")) {
-        formData.conclusion_content = tinyMCE
-          .get("conclusion-content")
-          .getContent();
+      // First check if we can get the editor directly
+      if (typeof tinyMCE !== "undefined") {
+        // Try multiple ways to get the editor - first by ID
+        var conclusionEditor = tinyMCE.get("conclusion-content");
+        if (conclusionEditor) {
+          formData.conclusion_content = conclusionEditor.getContent();
+          console.log(
+            "Got conclusion_content from tinyMCE.get():",
+            formData.conclusion_content
+          );
+        }
+        // Try from editors array if ID method failed
+        else if (tinyMCE.editors["conclusion-content"]) {
+          formData.conclusion_content =
+            tinyMCE.editors["conclusion-content"].getContent();
+          console.log(
+            "Got conclusion_content from tinyMCE.editors[]:",
+            formData.conclusion_content
+          );
+        }
+        // Finally try directly from textarea by name
+        else {
+          formData.conclusion_content = $(
+            "textarea[name='conclusion_content']"
+          ).val();
+          console.log(
+            "Got conclusion_content from textarea by name:",
+            formData.conclusion_content
+          );
+        }
       } else {
-        formData.conclusion_content = $("#conclusion-content").val();
+        // No TinyMCE, use the textarea directly
+        formData.conclusion_content = $(
+          "textarea[name='conclusion_content']"
+        ).val();
+        console.log(
+          "TinyMCE not available, using textarea value for conclusion:",
+          formData.conclusion_content
+        );
       }
-      // END OF CONCLUSION SECTION CODE
+
+      // If still empty, make one last attempt using a broader selector
+      if (!formData.conclusion_content) {
+        formData.conclusion_content =
+          $("textarea[id^='conclusion-content']").val() || "";
+        console.log(
+          "Final attempt to get conclusion_content:",
+          formData.conclusion_content
+        );
+      }
 
       // SEO fields
       formData.meta_title = $("#meta-title").val();
@@ -801,6 +903,8 @@
 
       // Author fields
       formData.author_name = $("#author-name").val();
+      formData.author_bio = $("#author-bio").val();
+      formData.author_image = $("#author-image").val();
 
       // Page ID if editing
       if (this.pageId) {
@@ -852,6 +956,9 @@
         };
         formData.breadcrumbs.push(breadcrumb);
       });
+
+      // Final log of the form data
+      console.log("Complete form data being sent:", formData);
 
       return formData;
     },
@@ -940,6 +1047,11 @@
 
     previewPage: function () {
       var self = this;
+
+      // Force TinyMCE to update textareas before collecting data
+      if (typeof tinyMCE !== "undefined") {
+        tinyMCE.triggerSave();
+      }
 
       // Save the page first
       var formData = this.collectFormData();

@@ -158,6 +158,29 @@ function csp_render_page($page) {
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
+
+            <?php if (!empty($page['author_name'])) : ?>
+                <div class="csp-author-section">
+                    <h2>About the Author</h2>
+                    <div class="csp-author-container">
+                        <?php if (!empty($page['author_image'])) : ?>
+                        <div class="csp-author-image">
+                            <img src="<?php echo esc_url($page['author_image']); ?>" alt="<?php echo esc_attr($page['author_name']); ?>">
+                        </div>
+                        <?php endif; ?>
+                        
+                        <div class="csp-author-details">
+                            <h3 class="csp-author-name"><?php echo esc_html($page['author_name']); ?></h3>
+                            
+                            <?php if (!empty($page['author_bio'])) : ?>
+                            <div class="csp-author-bio">
+                                <?php echo wp_kses_post($page['author_bio']); ?>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
             
             <?php if (!empty($page['faq_items'])) : ?>
                 <div class="csp-faq-section">

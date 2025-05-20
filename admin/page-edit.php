@@ -300,25 +300,38 @@ $page_title = $page_id ? 'Edit Page' : 'Add New Page';
                         </div>
                         
                         <!-- Author Settings -->
-                        <div class="postbox">
-                            <h2 class="hndle">Authoring</h2>
-                            <div class="inside">
-                                <table class="form-table">
-                                    <tr>
-                                        <th scope="row"><label for="author-name">Author Name</label></th>
-                                        <td><input type="text" id="author-name" name="author_name" class="regular-text"></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">Editor</th>
-                                        <td><span id="editor-name"><?php echo esc_html(wp_get_current_user()->display_name); ?></span></td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
+<div class="postbox">
+    <h2 class="hndle">Authoring</h2>
+    <div class="inside">
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="author-name">Author Name</label></th>
+                <td><input type="text" id="author-name" name="author_name" class="regular-text"></td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="author-bio">Author Bio</label></th>
+                <td>
+                    <textarea id="author-bio" name="author_bio" rows="4" class="large-text"></textarea>
+                    <p class="description">A short biography of the author.</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="author-image">Author Image</label></th>
+                <td>
+                    <div class="image-preview-wrapper">
+                        <img id="author-image-preview" src="" style="max-width: 150px; display: none;">
                     </div>
-                </div>
-            </div>
-        </form>
+                    <input type="hidden" id="author-image" name="author_image" class="regular-text">
+                    <button type="button" class="button" id="author-image-button">Select Image</button>
+                    <button type="button" class="button" id="author-image-remove" style="display: none;">Remove</button>
+                    <p class="description">Select an image for the author. Recommended size: 150x150px.</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">Editor</th>
+                <td><span id="editor-name"><?php echo esc_html(wp_get_current_user()->display_name); ?></span></td>
+            </tr>
+        </table>
     </div>
 </div>
 
